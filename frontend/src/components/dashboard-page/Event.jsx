@@ -21,19 +21,19 @@ export default function Event({
                                 location,
                                 game,
                                 participants: { current, capacity },
-                                onCancelRegistration, // Keep this if used elsewhere
+                                onCancelRegistration: onCancelEvent, // Keep this if used elsewhere
                                 onRegistrationUpdate, // Add the refresh prop
                               }) {
   const [open, setOpen] = useState(false)
   // No local state needed for count here, rely on parent refresh
 
-  const handleCancelRegistration = () => {
+  const handleCancelEvent = () => {
     // TODO: Implement actual unregistration API call using registration ID
     console.warn("Unregistering from dashboard event card needs implementation.");
 
     // Call the provided callback function (if it exists for other purposes)
-    if (typeof onCancelRegistration === "function") {
-      onCancelRegistration();
+    if (typeof onCancelEvent === "function") {
+      onCancelEvent();
     }
     // Call the refresh function passed from the parent dashboard page
     if (typeof onRegistrationUpdate === "function") {
@@ -76,17 +76,17 @@ export default function Event({
               <Dialog open={open} onOpenChange={setOpen}>
                 <DialogTrigger asChild>
                   <Button variant="destructive" size="sm">
-                    Cancel Registration
+                    Cancel Event
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-[425px]">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
                       <AlertCircle className="h-5 w-5 text-destructive" />
-                      Cancel Registration
+                      Cancel Event
                     </DialogTitle>
                     <DialogDescription>
-                      Are you sure you want to cancel your registration? This action cannot be undone.
+                      Are you sure you want to cancel your event? 
                     </DialogDescription>
                   </DialogHeader>
                   <div className="py-4">
@@ -107,10 +107,10 @@ export default function Event({
                   </div>
                   <DialogFooter>
                     <Button variant="outline" onClick={() => setOpen(false)}>
-                      Keep Registration
+                      Keep Event
                     </Button>
-                    <Button variant="destructive" onClick={handleCancelRegistration}>
-                      Cancel Registration
+                    <Button variant="destructive" onClick={handleCancelEvent}>
+                      Cancel Event
                     </Button>
                   </DialogFooter>
                 </DialogContent>
