@@ -17,9 +17,24 @@ import { XIcon } from 'lucide-react';
 const GameOwnerTag = ({ className }) => {
   const [showFullDialog, setShowFullDialog] = useState(false);
 
+  // Handler for when the tag is clicked
   const handleTagClick = (e) => {
+    // Ensure the click doesn't propagate to parent elements
     e.stopPropagation();
+    e.preventDefault();
     setShowFullDialog(true);
+  };
+
+  // Handler for when the dialog is closed
+  const handleDialogClose = (open) => {
+    // When dialog is closed, make sure to prevent the event from reaching the card
+    if (!open) {
+      // Small delay to allow the dialog close animation to complete
+      // before setting the state, which helps prevent race conditions
+      setTimeout(() => {
+        setShowFullDialog(false);
+      }, 10);
+    }
   };
 
   // This function is crucial - it prevents any click inside the dialog
@@ -31,10 +46,10 @@ const GameOwnerTag = ({ className }) => {
   };
 
   return (
-    <>
+    <div onClick={blockPropagation}>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div className="inline-block cursor-help">
+          <div className="inline-block cursor-help" onClick={blockPropagation}>
             <Tag 
               text="Game Owner" 
               variant="owner" 
@@ -44,7 +59,7 @@ const GameOwnerTag = ({ className }) => {
             />
           </div>
         </TooltipTrigger>
-        <TooltipContent className="text-xs py-1 px-2">
+        <TooltipContent className="text-xs py-1 px-2" onClick={blockPropagation}>
           Click for more information
         </TooltipContent>
       </Tooltip>
@@ -52,11 +67,14 @@ const GameOwnerTag = ({ className }) => {
       {/* Full dialog with detailed information */}
       <Dialog 
         open={showFullDialog} 
-        onOpenChange={setShowFullDialog}
+        onOpenChange={handleDialogClose}
       >
-        <DialogContent className="sm:max-w-md overflow-hidden">
+        <DialogContent className="sm:max-w-md overflow-hidden" onClick={blockPropagation}>
           {/* Simple close button without additional handlers */}
-          <DialogClose className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">
+          <DialogClose 
+            className="absolute top-4 right-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none"
+            onClick={blockPropagation}
+          >
             <XIcon className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </DialogClose>
@@ -97,7 +115,7 @@ const GameOwnerTag = ({ className }) => {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };
 
