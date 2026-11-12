@@ -42,3 +42,6 @@ out/
 # OAuth tokens directory
 /tokens/.env
 .env.test
+
+.env
+.env.test
