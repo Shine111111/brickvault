@@ -14,7 +14,7 @@ import Tag from '../common/Tag.jsx';
 import GameOwnerTag from '../common/GameOwnerTag.jsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, GamepadIcon, Mail, Loader2 } from 'lucide-react';
-import { formatJoinDate, formatRelativeTime } from '../lib/dateUtils.js';
+import { formatJoinDate, formatRelativeTime } from '@/lib/dateUtils.js';
 import { sendConnectionRequest } from '@/service/user-api.js'; // Added connection API import
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner'; // Added toast import

@@ -8,7 +8,7 @@ import { useAuth } from "@/context/AuthContext"; // Import Auth context
 import {
   Card,
   CardContent
-} from "../../ui/card";
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,

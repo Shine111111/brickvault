@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.jsx";
 import { motion, AnimatePresence } from "framer-motion";
-import { cn } from "@/components/lib/utils";
+import { cn } from "@/lib/utils";
 
 const UserSearchBar = ({ 
   searchQuery, 

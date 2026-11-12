@@ -8,11 +8,11 @@ import {
   DialogTitle, 
   DialogFooter,
   DialogDescription
-} from "../../ui/dialog";
-import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
-import { Textarea } from "../../ui/textarea";
-import { Label } from "../../ui/label";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { createEvent } from "../../service/event-api.js";
 import { getGamesAvailableForEvents } from "../../service/game-api.js";
 import { Loader2, Calendar, Users, MapPin, Search, X, Check, AlertCircle, Info } from "lucide-react";
@@ -20,15 +20,15 @@ import { useAuth } from "../../context/AuthContext.jsx";
 import { 
   Card,
   CardContent
-} from "../../ui/card";
+} from "@/components/ui/card";
 import {
   FormField,
   FormItem,
   FormLabel,
   FormControl
-} from "../../ui/form";
-import { ScrollArea } from "../../ui/scroll-area";
-import { Badge } from "../../ui/badge";
+} from "@/components/ui/form";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "../../lib/utils";
 
 // Create a utility function to help with debugging

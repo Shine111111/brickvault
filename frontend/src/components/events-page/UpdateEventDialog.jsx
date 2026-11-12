@@ -8,11 +8,11 @@ import {
   DialogTitle, 
   DialogFooter,
   DialogDescription
-} from "../../ui/dialog";
-import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
-import { Textarea } from "../../ui/textarea";
-import { Label } from "../../ui/label";
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { updateEvent, updateEventWithGameChange, getEventById } from "../../service/event-api.js";
 import { getGamesByOwner } from "../../service/game-api.js";
 import { Loader2, Calendar, Users, MapPin, Search, X, Check, AlertCircle, Info } from "lucide-react";
@@ -20,7 +20,7 @@ import { useAuth } from "@/context/AuthContext";
 import { 
   Card,
   CardContent
-} from "../../ui/card";
+} from "@/components/ui/card";
 
 // Create a utility function to help with debugging
 const logState = (message, data = {}) => {

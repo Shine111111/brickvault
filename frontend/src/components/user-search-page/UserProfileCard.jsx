@@ -16,8 +16,8 @@ import Tag from '../common/Tag.jsx';
 import GameOwnerTag from '../common/GameOwnerTag.jsx';
 import PlayerTag from '../common/PlayerTag.jsx';
 import { motion } from 'framer-motion';
-import { cn } from '@/components/lib/utils';
-import { formatJoinDate } from '../lib/dateUtils.js';
+import { cn } from '@/lib/utils';
+import { formatJoinDate } from '@/lib/dateUtils.js';
 import { Calendar, Mail, User, Gamepad, ArrowUpRight } from 'lucide-react';
 
 const UserProfileCard = ({ user, onClick }) => {

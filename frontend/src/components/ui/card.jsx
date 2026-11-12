@@ -1,6 +1,6 @@
 import * as React from "react"
 
-import { cn } from "@/components/lib/utils.js" // Corrected path
+import { cn } from "@/lib/utils.js" // Corrected path
 
 function Card({
   className,

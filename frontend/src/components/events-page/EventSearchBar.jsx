@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { Input } from "../../ui/input";
+import { Input } from "@/components/ui/input";
 import { Search, CalendarX, RefreshCw } from "lucide-react";
 import { searchEventsByTitle } from "../../service/event-api.js";
 import { EventCard } from "./EventCard";

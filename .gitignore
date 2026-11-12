@@ -40,4 +40,5 @@ out/
 # Environment variables file
 
 # OAuth tokens directory
-/tokens/
+/tokens/.env
+.env.test
