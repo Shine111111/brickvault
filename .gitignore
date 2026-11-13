@@ -45,3 +45,9 @@ out/
 
 .env
 .env.test
+
+
+
+.nx/cache
+.nx/workspace-data
+.nx/migrate-runs
