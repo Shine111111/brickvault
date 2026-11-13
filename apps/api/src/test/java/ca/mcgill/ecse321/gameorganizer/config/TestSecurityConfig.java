@@ -62,7 +62,7 @@ public class TestSecurityConfig {
                 // Account management
                 .requestMatchers(HttpMethod.PUT, "/account/**").authenticated()
                 .requestMatchers(HttpMethod.DELETE, "/account/**").authenticated()
-                // Game operations - Assume only game owners or admins can modify
+                // LegoSet operations - Assume only game owners or admins can modify
                 .requestMatchers(HttpMethod.POST, "/games/**").hasAnyRole("GAME_OWNER", "ADMIN")
                 .requestMatchers(HttpMethod.PUT, "/games/**").hasAnyRole("GAME_OWNER", "ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/games/**").hasAnyRole("GAME_OWNER", "ADMIN")

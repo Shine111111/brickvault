@@ -16,7 +16,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.Event;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.Registration;
 import ca.mcgill.ecse321.gameorganizer.repositories.RegistrationRepository;
 
@@ -31,7 +31,7 @@ public class RegistrationRepositoryTest {
 
     private Account testAttendee;
     private Event testEvent;
-    private Game testGame;
+    private LegoSet testGame;
     private Registration testRegistration;
     private Date testDate;
 
@@ -45,7 +45,7 @@ public class RegistrationRepositoryTest {
         testAttendee = entityManager.persist(testAttendee);
 
         // Create and save test game
-        testGame = new Game("Test Game", 2, 4, "test.jpg", new Date());
+        testGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10003", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         testGame = entityManager.persist(testGame);
 
         // Create and save test event
@@ -168,7 +168,7 @@ public class RegistrationRepositoryTest {
         // Store IDs for verification
         final Account storedAttendee = entityManager.find(Account.class, testAttendee.getId());
         final Event storedEvent = entityManager.find(Event.class, testEvent.getId());
-        final Game storedGame = entityManager.find(Game.class, testGame.getId());
+        final LegoSet storedGame = entityManager.find(LegoSet.class, testGame.getId());
 
         // Delete the registration
         registrationRepository.delete(testRegistration);
@@ -178,6 +178,6 @@ public class RegistrationRepositoryTest {
         // Verify that the related entities still exist
         assertTrue(entityManager.find(Account.class, storedAttendee.getId()) != null, "Attendee should still exist");
         assertTrue(entityManager.find(Event.class, storedEvent.getId()) != null, "Event should still exist");
-        assertTrue(entityManager.find(Game.class, storedGame.getId()) != null, "Game should still exist");
+        assertTrue(entityManager.find(LegoSet.class, storedGame.getId()) != null, "LegoSet should still exist");
     }
 }

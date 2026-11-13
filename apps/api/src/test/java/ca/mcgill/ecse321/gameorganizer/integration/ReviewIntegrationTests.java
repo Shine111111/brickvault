@@ -36,11 +36,11 @@ import org.junit.jupiter.api.BeforeAll;
 import ca.mcgill.ecse321.gameorganizer.dto.request.ReviewSubmissionDto;
 // Removed TestConfig and SecurityConfig imports
 import ca.mcgill.ecse321.gameorganizer.models.Account;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner; // Import GameOwner
 import ca.mcgill.ecse321.gameorganizer.models.Review;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.ReviewRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.BorrowRequestRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.EventRepository;
@@ -73,7 +73,7 @@ public class ReviewIntegrationTests {
     private AccountRepository accountRepository;
 
     @Autowired
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -88,7 +88,7 @@ public class ReviewIntegrationTests {
     private LendingRecordRepository lendingRecordRepository;
 
     private Account testReviewer;
-    private Game testGame;
+    private LegoSet testGame;
     private Review testReview;
     private static final String BASE_URL = "/api/reviews";
     private static final String TEST_REVIEWER_EMAIL = "reviewer@example.com"; // Added constant
@@ -123,16 +123,15 @@ public class ReviewIntegrationTests {
         System.out.println("Created gameOwner with ID: " + gameOwner.getId() + ", email: " + gameOwner.getEmail());
 
         // Create test game with unique name and assign the GameOwner
-        String uniqueGameName = "Test Game " + System.currentTimeMillis();
-        testGame = new Game(uniqueGameName, 2, 4, "test.jpg", new Date());
-        testGame.setOwner(gameOwner); // Assign the saved GameOwner
-        testGame = gameRepository.save(testGame); // Save the game before creating a review
+        String uniqueGameName = "Test LegoSet " + System.currentTimeMillis();
+        testGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10022", uniqueGameName, "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
+        testGame = legoSetRepository.save(testGame); // Save the game before creating a review
         System.out.println("Created testGame with ID: " + testGame.getId() + ", name: " + testGame.getName());
 
         // Create test review with the saved game
         testReview = new Review(4, "Great game!", new Date());
         testReview.setReviewer(testReviewer);
-        testReview.setGameReviewed(testGame); // Use the saved Game instance
+        testReview.setLegoSet(testGame); // Use the saved LegoSet instance
         testReview = reviewRepository.save(testReview);
         System.out.println("Created testReview with ID: " + testReview.getId());
 
@@ -155,13 +154,13 @@ public class ReviewIntegrationTests {
         reviewRepository.deleteAll();
         System.out.println("Deleted all reviews");
         
-        // Delete other entities that might reference Game
+        // Delete other entities that might reference LegoSet
         try {
-            // Delete borrow requests first as they reference Game
+            // Delete borrow requests first as they reference LegoSet
             borrowRequestRepository.deleteAll();
             System.out.println("Deleted all borrow requests");
             
-            // Delete events as they reference Game
+            // Delete events as they reference LegoSet
             eventRepository.deleteAll();
             System.out.println("Deleted all events");
             
@@ -173,7 +172,7 @@ public class ReviewIntegrationTests {
         }
         
         // Then delete games
-        gameRepository.deleteAll();
+        legoSetRepository.deleteAll();
         System.out.println("Deleted all games");
         
         // Finally delete accounts (including GameOwner)
@@ -199,7 +198,7 @@ public class ReviewIntegrationTests {
                 .with(user(TEST_REVIEWER_EMAIL).password(TEST_PASSWORD).roles("USER"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest()); // Service throws IllegalArgumentException -> 400
+            .andExpect(status().isNotFound()); // Service throws ResourceNotFoundException -> 404
     }
 
     @Test
@@ -229,13 +228,12 @@ public class ReviewIntegrationTests {
             "nonexistent@example.com" // Non-existent email
         );
 
-        // Authenticate as the valid user, but the DTO contains an invalid reviewer email
-        // The service logic should catch this based on the DTO content.
+        // Authenticate with a non-existent reviewer email so service throws ResourceNotFoundException -> 404
         mockMvc.perform(MockMvcRequestBuilders.post(BASE_URL)
-                .with(user(TEST_REVIEWER_EMAIL).password(TEST_PASSWORD).roles("USER"))
+                .with(user("nonexistent@example.com").password(TEST_PASSWORD).roles("USER"))
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isBadRequest()); // Service throws IllegalArgumentException -> 400
+            .andExpect(status().isNotFound()); // Service throws ResourceNotFoundException -> 404
     }
 
     // ============================================================
@@ -304,7 +302,7 @@ public class ReviewIntegrationTests {
     public void testDeleteReviewSuccess() throws Exception {
         mockMvc.perform(MockMvcRequestBuilders.delete(BASE_URL + "/" + testReview.getId())
                 .with(user(TEST_REVIEWER_EMAIL).password(TEST_PASSWORD).roles("USER"))) // Authenticate as reviewer
-            .andExpect(status().isOk()); // Expect 200 OK
+            .andExpect(status().isNoContent()); // Expect 204 No Content
 
         assertFalse(reviewRepository.findById(testReview.getId()).isPresent());
     }
@@ -323,7 +321,7 @@ public class ReviewIntegrationTests {
         // First deletion
         mockMvc.perform(MockMvcRequestBuilders.delete(BASE_URL + "/" + testReview.getId())
                 .with(user(TEST_REVIEWER_EMAIL).password(TEST_PASSWORD).roles("USER")))
-            .andExpect(status().isOk()); // Expect 200 OK
+            .andExpect(status().isNoContent()); // Expect 204 No Content
 
         // Second deletion should fail (not found) -> 404 NOT_FOUND
         mockMvc.perform(MockMvcRequestBuilders.delete(BASE_URL + "/" + testReview.getId())

@@ -34,10 +34,10 @@ import ca.mcgill.ecse321.gameorganizer.TestJwtConfig;
 import ca.mcgill.ecse321.gameorganizer.dto.request.CreateEventRequest;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.Event;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.EventRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
 import ca.mcgill.ecse321.gameorganizer.services.EventService;
 import ca.mcgill.ecse321.gameorganizer.exceptions.ForbiddenException;
 import org.springframework.http.HttpStatus;
@@ -52,7 +52,7 @@ public class EventServiceTest {
     private EventRepository eventRepository;
 
     @Mock
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
 
     @Mock // Add mock for AccountRepository
     private AccountRepository accountRepository;
@@ -64,8 +64,8 @@ public class EventServiceTest {
     // Test constants
     private static final UUID VALID_EVENT_ID = UUID.randomUUID();
     private static final int VALID_GAME_ID = 1; // Added constant for game ID
-    private static final String VALID_TITLE = "Game Night";
-    private static final String VALID_LOCATION = "Game Room";
+    private static final String VALID_TITLE = "LegoSet Night";
+    private static final String VALID_LOCATION = "LegoSet Room";
     private static final String VALID_DESCRIPTION = "Fun game night!";
     private static final int VALID_MAX_PARTICIPANTS = 10;
     private static final String VALID_HOST_EMAIL = "host@test.com"; // Added constant
@@ -83,10 +83,10 @@ public class EventServiceTest {
         Account host = new Account("Host", VALID_HOST_EMAIL, "password");
         host.setId(VALID_HOST_ID);
 
-        Game game = new Game("Test Game", 2, 4, "test.jpg", new java.util.Date());
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10033", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game.setId(VALID_GAME_ID);
-        // Assuming Game model might not need an owner directly, or it's set differently
-        // game.setOwner(host); // Only set if Game requires an owner and accepts Account
+        // Assuming LegoSet model might not need an owner directly, or it's set differently
+        // game.setOwner(host); // Only set if LegoSet requires an owner and accepts Account
 
         CreateEventRequest request = new CreateEventRequest();
         request.setTitle(VALID_TITLE);
@@ -94,10 +94,10 @@ public class EventServiceTest {
         request.setLocation(VALID_LOCATION);
         request.setDescription(VALID_DESCRIPTION);
         request.setMaxParticipants(VALID_MAX_PARTICIPANTS);
-        // Create a simple Game DTO/Stub for the request, only ID is needed by service validation
-        Game gameStub = new Game();
+        // Create a simple LegoSet DTO/Stub for the request, only ID is needed by service validation
+        LegoSet gameStub = new LegoSet();
         gameStub.setId(VALID_GAME_ID);
-        request.setFeaturedGame(gameStub); // Use the stub in the request
+        request.setFeaturedSet(gameStub); // Use the stub in the request
 
         // Mock the security context to simulate the host being authenticated
         Authentication authentication = mock(Authentication.class);
@@ -109,7 +109,7 @@ public class EventServiceTest {
         try {
             // Mock repository lookups needed by the service
             when(accountRepository.findByEmail(VALID_HOST_EMAIL)).thenReturn(Optional.of(host)); // Host lookup by email
-            when(gameRepository.findById(VALID_GAME_ID)).thenReturn(Optional.of(game)); // Game lookup by ID
+            when(legoSetRepository.findById(VALID_GAME_ID)).thenReturn(Optional.of(game)); // LegoSet lookup by ID
 
             // Mock the event saving process
             // Use ArgumentCaptor to verify the event passed to save
@@ -134,19 +134,19 @@ public class EventServiceTest {
             assertNotNull(result.getHost());
             assertEquals(VALID_HOST_ID, result.getHost().getId()); // Verify correct host ID
             assertEquals(VALID_HOST_EMAIL, result.getHost().getEmail()); // Verify correct host email
-            assertNotNull(result.getFeaturedGame());
-            assertEquals(VALID_GAME_ID, result.getFeaturedGame().getId()); // Verify correct game ID
+            assertNotNull(result.getFeaturedSet());
+            assertEquals(VALID_GAME_ID, result.getFeaturedSet().getId()); // Verify correct game ID
 
             // Verify repository interactions
             verify(accountRepository).findByEmail(VALID_HOST_EMAIL);
-            verify(gameRepository).findById(VALID_GAME_ID);
+            verify(legoSetRepository).findById(VALID_GAME_ID);
             verify(eventRepository).save(any(Event.class));
 
             // Verify the details of the saved event
             Event capturedEvent = eventCaptor.getValue();
             assertEquals(VALID_TITLE, capturedEvent.getTitle());
             assertEquals(host, capturedEvent.getHost()); // Check the host object itself
-            assertEquals(game, capturedEvent.getFeaturedGame()); // Check the game object itself
+            assertEquals(game, capturedEvent.getFeaturedSet()); // Check the game object itself
         } finally {
             SecurityContextHolder.clearContext(); // Clear context after test
         }
@@ -159,7 +159,7 @@ public class EventServiceTest {
         request.setTitle(null);
         request.setDateTime(new Date(System.currentTimeMillis()));
         request.setMaxParticipants(VALID_MAX_PARTICIPANTS);
-        request.setFeaturedGame(new Game()); // Game needed for validation check
+        request.setFeaturedSet(new LegoSet()); // LegoSet needed for validation check
         // No need to set host on DTO
         // No need to mock accountRepository.findByEmail as it won't be called
 
@@ -175,7 +175,7 @@ public class EventServiceTest {
         request.setTitle("  ");
         request.setDateTime(new Date(System.currentTimeMillis()));
         request.setMaxParticipants(VALID_MAX_PARTICIPANTS);
-        request.setFeaturedGame(new Game()); // Game needed for validation check
+        request.setFeaturedSet(new LegoSet()); // LegoSet needed for validation check
         // No need to set host on DTO
         // No need to mock accountRepository.findByEmail as it won't be called
 
@@ -206,10 +206,10 @@ public class EventServiceTest {
             request.setDescription(VALID_DESCRIPTION);
             request.setMaxParticipants(VALID_MAX_PARTICIPANTS);
             
-            // Create and set a Game object
-            Game game = new Game();
+            // Create and set a LegoSet object
+            LegoSet game = new LegoSet();
             game.setId(VALID_GAME_ID);
-            request.setFeaturedGame(game);
+            request.setFeaturedSet(game);
             
             // Test & Verify
             IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, 
@@ -227,7 +227,7 @@ public class EventServiceTest {
         request.setTitle(VALID_TITLE);
         request.setDateTime(new java.sql.Date(System.currentTimeMillis()));
         request.setMaxParticipants(0);
-        request.setFeaturedGame(new Game()); // Game needed for validation check
+        request.setFeaturedSet(new LegoSet()); // LegoSet needed for validation check
         // No need to set host on DTO
         // No need to mock accountRepository.findByEmail as it won't be called
 
@@ -242,7 +242,7 @@ public class EventServiceTest {
         Account host = new Account("Host", VALID_HOST_EMAIL, "password"); // Create host
         host.setId(VALID_HOST_ID);
         Event event = new Event(VALID_TITLE, new Date(System.currentTimeMillis()), VALID_LOCATION,
-            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new Game(), host); // Use host
+            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new LegoSet(), host); // Use host
         event.setId(VALID_EVENT_ID); // Set ID
 
         when(eventRepository.findEventById(VALID_EVENT_ID)).thenReturn(Optional.of(event));
@@ -273,7 +273,7 @@ public class EventServiceTest {
         Account host = new Account("Host", VALID_HOST_EMAIL, "password"); // Create host
         host.setId(VALID_HOST_ID);
         events.add(new Event(VALID_TITLE, new Date(System.currentTimeMillis()), VALID_LOCATION,
-            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new Game(), host)); // Use host
+            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new LegoSet(), host)); // Use host
         when(eventRepository.findAll()).thenReturn(events);
 
         // Test
@@ -299,7 +299,7 @@ public class EventServiceTest {
         host.setId(VALID_HOST_ID);
         
         Event event = new Event(VALID_TITLE, new java.util.Date(), VALID_LOCATION, 
-                VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new Game(), host);
+                VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new LegoSet(), host);
         event.setId(VALID_EVENT_ID);
         
         // Mock the security context
@@ -382,7 +382,7 @@ public class EventServiceTest {
             VALID_LOCATION, 
             VALID_DESCRIPTION, 
             VALID_MAX_PARTICIPANTS, 
-            new Game(), 
+            new LegoSet(), 
             actualHost
         );
         existingEvent.setId(VALID_EVENT_ID);
@@ -437,7 +437,7 @@ public class EventServiceTest {
         host.setId(VALID_HOST_ID);
         
         Event event = new Event(VALID_TITLE, new java.util.Date(), VALID_LOCATION, 
-                VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new Game(), host);
+                VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new LegoSet(), host);
         event.setId(VALID_EVENT_ID);
         
         // Mock the security context
@@ -522,7 +522,7 @@ public class EventServiceTest {
             VALID_LOCATION, 
             VALID_DESCRIPTION, 
             VALID_MAX_PARTICIPANTS, 
-            new Game(), 
+            new LegoSet(), 
             actualHost
         );
         
@@ -563,28 +563,28 @@ public class EventServiceTest {
     @Test
     public void testFindEventsByGameName() {
         // Setup
-        String gameName = "Test Game";
+        String gameName = "Test LegoSet";
         List<Event> events = new ArrayList<>();
         Account host = new Account("Host", VALID_HOST_EMAIL, "password");
         host.setId(VALID_HOST_ID);
         events.add(new Event(VALID_TITLE, new Date(System.currentTimeMillis()), VALID_LOCATION,
-            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new Game(gameName, 2, 4, "img.jpg", new java.util.Date()), host)); // Use host
-        when(eventRepository.findEventByFeaturedGameName(gameName)).thenReturn(events);
+            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10034", gameName, "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set"), host)); // Use host
+        when(eventRepository.findEventByFeaturedSetName(gameName)).thenReturn(events);
 
         // Test
-        List<Event> result = eventService.findEventsByGameName(gameName);
+        List<Event> result = eventService.findEventsBySetName(gameName);
 
         // Verify
         assertNotNull(result);
         assertEquals(1, result.size());
-        verify(eventRepository).findEventByFeaturedGameName(gameName);
+        verify(eventRepository).findEventByFeaturedSetName(gameName);
     }
 
     @Test
     public void testFindEventsByGameNameEmpty() {
         // Test & Verify
-        assertThrows(IllegalArgumentException.class, () -> eventService.findEventsByGameName(""));
-        verify(eventRepository, never()).findEventByFeaturedGameName(anyString());
+        assertThrows(IllegalArgumentException.class, () -> eventService.findEventsBySetName(""));
+        verify(eventRepository, never()).findEventByFeaturedSetName(anyString());
     }
 
     @Test
@@ -595,7 +595,7 @@ public class EventServiceTest {
         Account host = new Account("Host", VALID_HOST_EMAIL, "password");
         host.setId(VALID_HOST_ID);
         events.add(new Event(VALID_TITLE, new Date(System.currentTimeMillis()), VALID_LOCATION,
-            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new Game(), host)); // Use host
+            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, new LegoSet(), host)); // Use host
         when(eventRepository.findEventByLocationContaining(locationSearch)).thenReturn(events);
 
         // Test
@@ -614,35 +614,7 @@ public class EventServiceTest {
         verify(eventRepository, never()).findEventByLocationContaining(anyString());
     }
 
-    @Test
-    public void testFindEventsByGameMinPlayers() {
-        // Setup
-        int minPlayers = 2;
-        List<Event> events = new ArrayList<>();
-        Account host = new Account("Host", VALID_HOST_EMAIL, "password");
-        host.setId(VALID_HOST_ID);
-        Game game = new Game("Test Game", minPlayers, 4, "img.jpg", new java.util.Date()); // Ensure game meets criteria
-        events.add(new Event(VALID_TITLE, new Date(System.currentTimeMillis()), VALID_LOCATION,
-            VALID_DESCRIPTION, VALID_MAX_PARTICIPANTS, game, host)); // Use host and game
-        when(eventRepository.findByFeaturedGameMinPlayersGreaterThanEqual(minPlayers)).thenReturn(events);
-
-        // Test
-        List<Event> result = eventService.findEventsByGameMinPlayers(minPlayers);
-
-        // Verify
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        verify(eventRepository).findByFeaturedGameMinPlayersGreaterThanEqual(minPlayers);
-    }
-
-    @Test
-    public void testFindEventsByGameMinPlayersInvalid() {
-        // Test & Verify
-        assertThrows(IllegalArgumentException.class, () -> eventService.findEventsByGameMinPlayers(0));
-        verify(eventRepository, never()).findByFeaturedGameMinPlayersGreaterThanEqual(0);
-    }
-
-    @AfterEach
+@AfterEach
     public void tearDown() {
         // Clear the security context after each test to avoid side effects
         SecurityContextHolder.clearContext();

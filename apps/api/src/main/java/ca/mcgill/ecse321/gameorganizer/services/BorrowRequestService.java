@@ -26,13 +26,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequest;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequestStatus;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
-import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
+
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.BorrowRequestRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
-import ca.mcgill.ecse321.gameorganizer.models.GameInstance;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameInstanceRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
+import ca.mcgill.ecse321.gameorganizer.models.CollectionItem;
+import ca.mcgill.ecse321.gameorganizer.repositories.CollectionItemRepository;
 /**
  * Service for managing borrow requests in the game organizer system.
  * Handles request creation, retrieval, updates, and deletion.
@@ -45,10 +45,10 @@ public class BorrowRequestService {
     private static final Logger logger = LoggerFactory.getLogger(BorrowRequestService.class);
 
     private final BorrowRequestRepository borrowRequestRepository;
-    private final GameRepository gameRepository;
+    private final LegoSetRepository legoSetRepository;
     private final AccountRepository accountRepository;
     private final LendingRecordService lendingRecordService; // Added dependency
-    private final GameInstanceRepository gameInstanceRepository; // Added dependency
+    private final CollectionItemRepository collectionItemRepository; // Added dependency
 
     // UserContext field removed
 
@@ -61,12 +61,12 @@ public class BorrowRequestService {
      */
     // Updated constructor to remove UserContext
     @Autowired
-    public BorrowRequestService(BorrowRequestRepository borrowRequestRepository, GameRepository gameRepository, AccountRepository accountRepository, LendingRecordService lendingRecordService, GameInstanceRepository gameInstanceRepository) { // Added LendingRecordService and GameInstanceRepository
+    public BorrowRequestService(BorrowRequestRepository borrowRequestRepository, LegoSetRepository legoSetRepository, AccountRepository accountRepository, LendingRecordService lendingRecordService, CollectionItemRepository collectionItemRepository) { // Added LendingRecordService and GameInstanceRepository
         this.borrowRequestRepository = borrowRequestRepository;
-        this.gameRepository = gameRepository;
+        this.legoSetRepository = legoSetRepository;
         this.accountRepository = accountRepository;
         this.lendingRecordService = lendingRecordService; // Initialize LendingRecordService
-        this.gameInstanceRepository = gameInstanceRepository; // Initialize GameInstanceRepository
+        this.collectionItemRepository = collectionItemRepository; // Initialize GameInstanceRepository
     }
 
     /**
@@ -89,7 +89,7 @@ public class BorrowRequestService {
         );
 
         // Fetch game using ID from DTO
-        Optional<Game> gameOpt = gameRepository.findById(requestDTO.getRequestedGameId());
+        Optional<LegoSet> gameOpt = legoSetRepository.findById(requestDTO.getRequestedSetId());
         if (!gameOpt.isPresent()) {
             throw new IllegalArgumentException("Game not found.");
         }
@@ -99,44 +99,44 @@ public class BorrowRequestService {
             throw new IllegalArgumentException("End date must be after start date.");
         }
 
-        Game game = gameOpt.get();
+        LegoSet legoSet = gameOpt.get();
         // Account requester is already fetched from authentication context
 
         // Check if the requester is the owner of the specific game instance, not just the game type
-        Optional<GameInstance> gameInstanceOpt = gameInstanceRepository.findById(requestDTO.getGameInstanceId());
+        Optional<CollectionItem> gameInstanceOpt = collectionItemRepository.findById(requestDTO.getCollectionItemId());
         if (!gameInstanceOpt.isPresent()) {
             throw new IllegalArgumentException("Game instance not found.");
         }
         
-        GameInstance gameInstance = gameInstanceOpt.get();
-        if (gameInstance.getOwner() != null && gameInstance.getOwner().getId() == requester.getId()) {
+        CollectionItem collectionItem = gameInstanceOpt.get();
+        if (collectionItem.getOwner() != null && collectionItem.getOwner().getId() == requester.getId()) {
             throw new IllegalArgumentException("You cannot request your own game instance.");
         }
 
         // Check if the instance is available for the requested period
-        List<BorrowRequest> overlappingRequests = borrowRequestRepository.findOverlappingApprovedRequestsForGameInstance(
-                gameInstance.getId(), requestDTO.getStartDate(), requestDTO.getEndDate());
+        List<BorrowRequest> overlappingRequests = borrowRequestRepository.findOverlappingApprovedRequestsForCollectionItem(
+                collectionItem.getId(), requestDTO.getStartDate(), requestDTO.getEndDate());
 
         if (!overlappingRequests.isEmpty()) {
             throw new IllegalArgumentException("Game instance is unavailable for the requested period.");
         }
 
         BorrowRequest borrowRequest = new BorrowRequest();
-        borrowRequest.setRequestedGame(game);
+        borrowRequest.setRequestedSet(legoSet);
         borrowRequest.setRequester(requester);
         borrowRequest.setStartDate(requestDTO.getStartDate());
         borrowRequest.setEndDate(requestDTO.getEndDate());
         borrowRequest.setStatus(BorrowRequestStatus.PENDING);
         borrowRequest.setRequestDate(new Date());
-        borrowRequest.setGameInstance(gameInstance);
+        borrowRequest.setCollectionItem(collectionItem);
 
         BorrowRequest savedRequest = borrowRequestRepository.save(borrowRequest);
 
         return new BorrowRequestDto(
                 savedRequest.getId(),
                 savedRequest.getRequester().getId(),
-                savedRequest.getRequestedGame().getId(),
-                savedRequest.getGameInstance().getId(),
+                savedRequest.getRequestedSet().getId(),
+                savedRequest.getCollectionItem().getId(),
                 savedRequest.getStartDate(),
                 savedRequest.getEndDate(),
                 savedRequest.getStatus().name(),
@@ -159,13 +159,13 @@ public class BorrowRequestService {
                     .orElseThrow(() -> new IllegalArgumentException("No borrow request found with ID " + id));
 
             Integer requesterId = (request.getRequester() != null) ? request.getRequester().getId() : null;
-            Integer gameId = (request.getRequestedGame() != null) ? request.getRequestedGame().getId() : null;
+            Integer gameId = (request.getRequestedSet() != null) ? request.getRequestedSet().getId() : null;
             
             return new BorrowRequestDto(
                     request.getId(),
                     requesterId,
                     gameId,
-                    request.getGameInstance().getId(),
+                    request.getCollectionItem().getId(),
                     request.getStartDate(),
                     request.getEndDate(),
                     request.getStatus().name(),
@@ -214,8 +214,8 @@ public class BorrowRequestService {
                 return allRequests.stream()
                     .map(request -> {
                         Integer requesterId = (request.getRequester() != null) ? request.getRequester().getId() : null;
-                        Integer gameId = (request.getRequestedGame() != null) ? request.getRequestedGame().getId() : null;
-                        Integer instanceId = (request.getGameInstance() != null) ? request.getGameInstance().getId() : null;
+                        Integer gameId = (request.getRequestedSet() != null) ? request.getRequestedSet().getId() : null;
+                        Integer instanceId = (request.getCollectionItem() != null) ? request.getCollectionItem().getId() : null;
                         return new BorrowRequestDto(
                                 request.getId(),
                                 requesterId,
@@ -235,14 +235,14 @@ public class BorrowRequestService {
                         // User is the requester
                         (request.getRequester() != null && request.getRequester().getId() == currentUser.getId()) ||
                         // User is the instance owner (not just the game creator)
-                        (request.getGameInstance() != null && 
-                         request.getGameInstance().getOwner() != null &&
-                         request.getGameInstance().getOwner().getId() == currentUser.getId())
+                        (request.getCollectionItem() != null && 
+                         request.getCollectionItem().getOwner() != null &&
+                         request.getCollectionItem().getOwner().getId() == currentUser.getId())
                     )
                     .map(request -> {
                         Integer requesterId = (request.getRequester() != null) ? request.getRequester().getId() : null;
-                        Integer gameId = (request.getRequestedGame() != null) ? request.getRequestedGame().getId() : null;
-                        Integer instanceId = (request.getGameInstance() != null) ? request.getGameInstance().getId() : null;
+                        Integer gameId = (request.getRequestedSet() != null) ? request.getRequestedSet().getId() : null;
+                        Integer instanceId = (request.getCollectionItem() != null) ? request.getCollectionItem().getId() : null;
                         return new BorrowRequestDto(
                                 request.getId(),
                                 requesterId,
@@ -275,7 +275,7 @@ public class BorrowRequestService {
      * @throws IllegalArgumentException if the request is not found or status is invalid.
      */
     @Transactional
-    @PreAuthorize("@borrowRequestService.isGameOwnerOfRequest(#id, authentication.principal.username)")
+    @PreAuthorize("@borrowRequestService.isItemOwnerOfRequest(#id, authentication.principal.username)")
     public BorrowRequestDto updateBorrowRequestStatus(int id, BorrowRequestStatus newStatus) {
         BorrowRequest request; // Declare request outside the try block
         try {
@@ -290,21 +290,21 @@ public class BorrowRequestService {
 
         // If the status is being set to APPROVED, create a LendingRecord
         if (newStatus == BorrowRequestStatus.APPROVED) {
-            Game requestedGame = request.getRequestedGame();
-            if (requestedGame == null) {
+            LegoSet requestedSet = request.getRequestedSet();
+            if (requestedSet == null) {
                 throw new IllegalStateException("Cannot approve request: Game details are missing.");
             }
-            GameOwner owner = requestedGame.getOwner();
+            Account owner = request.getCollectionItem() != null ? request.getCollectionItem().getOwner() : null;
             if (owner == null) {
                 // This case might indicate an orphaned game or configuration issue.
                 throw new IllegalStateException("Cannot approve request: Game owner is not set.");
             }
             
             // Check if there is at least one available game instance
-            List<GameInstance> instances = gameInstanceRepository.findByGame(requestedGame);
+            List<CollectionItem> instances = collectionItemRepository.findByLegoSet(requestedSet);
             boolean hasAvailableInstance = false;
             
-            for (GameInstance instance : instances) {
+            for (CollectionItem instance : instances) {
                 if (instance.isAvailable()) {
                     hasAvailableInstance = true;
                     break;
@@ -350,8 +350,8 @@ public class BorrowRequestService {
 
         // Prepare and return the DTO
         Integer requesterId = (updatedRequest.getRequester() != null) ? updatedRequest.getRequester().getId() : null;
-        Integer gameId = (updatedRequest.getRequestedGame() != null) ? updatedRequest.getRequestedGame().getId() : null;
-        Integer instanceId = (updatedRequest.getGameInstance() != null) ? updatedRequest.getGameInstance().getId() : null;
+        Integer gameId = (updatedRequest.getRequestedSet() != null) ? updatedRequest.getRequestedSet().getId() : null;
+        Integer instanceId = (updatedRequest.getCollectionItem() != null) ? updatedRequest.getCollectionItem().getId() : null;
 
         return new BorrowRequestDto(
                 updatedRequest.getId(),
@@ -408,19 +408,19 @@ public class BorrowRequestService {
     /**
      * Checks if the given username corresponds to the owner of the game instance associated with the borrow request.
      */
-    public boolean isGameOwnerOfRequest(int requestId, String username) {
+    public boolean isItemOwnerOfRequest(int requestId, String username) {
         if (username == null) return false;
         try {
             BorrowRequest request = borrowRequestRepository.findBorrowRequestById(requestId).orElse(null);
             Account user = accountRepository.findByEmail(username).orElse(null);
 
-            if (request == null || user == null || request.getGameInstance() == null || request.getGameInstance().getOwner() == null) {
+            if (request == null || user == null || request.getCollectionItem() == null || request.getCollectionItem().getOwner() == null) {
                 return false; // Cannot determine ownership
             }
 
-            return request.getGameInstance().getOwner().getId() == user.getId();
+            return request.getCollectionItem().getOwner().getId() == user.getId();
         } catch (Exception e) {
-            logger.error("Error during isGameOwnerOfRequest check for request {}: {}", requestId, e.getMessage());
+            logger.error("Error during isItemOwnerOfRequest check for request {}: {}", requestId, e.getMessage());
             return false; // Deny on error
         }
     }
@@ -444,9 +444,9 @@ public class BorrowRequestService {
             if (isRequester) return true;
 
             // Check if user is the game instance owner
-            boolean isGameInstanceOwner = request.getGameInstance() != null && 
-                                  request.getGameInstance().getOwner() != null &&
-                                  request.getGameInstance().getOwner().getId() == user.getId();
+            boolean isGameInstanceOwner = request.getCollectionItem() != null && 
+                                  request.getCollectionItem().getOwner() != null &&
+                                  request.getCollectionItem().getOwner().getId() == user.getId();
             
             return isGameInstanceOwner;
         } catch (Exception e) {
@@ -464,11 +464,11 @@ public class BorrowRequestService {
     @Transactional
     public List<BorrowRequestDto> getBorrowRequestsByOwnerId(int ownerId) {
         // Find all game instances owned by this owner
-        List<GameInstance> ownedInstances = gameInstanceRepository.findByOwnerId(ownerId);
+        List<CollectionItem> ownedInstances = collectionItemRepository.findByOwnerId(ownerId);
         
         // Get IDs of owned instances
         List<Integer> ownedInstanceIds = ownedInstances.stream()
-            .map(GameInstance::getId)
+            .map(CollectionItem::getId)
             .collect(Collectors.toList());
             
         // Get all borrow requests
@@ -476,15 +476,15 @@ public class BorrowRequestService {
         
         // Filter requests for owned instances
         List<BorrowRequest> ownerRequests = allRequests.stream()
-            .filter(request -> request.getGameInstance() != null && 
-                ownedInstanceIds.contains(request.getGameInstance().getId()))
+            .filter(request -> request.getCollectionItem() != null && 
+                ownedInstanceIds.contains(request.getCollectionItem().getId()))
             .collect(Collectors.toList());
 
         return ownerRequests.stream()
                 .map(request -> {
                     Integer requesterId = (request.getRequester() != null) ? request.getRequester().getId() : null;
-                    Integer gameId = (request.getRequestedGame() != null) ? request.getRequestedGame().getId() : null;
-                    Integer instanceId = (request.getGameInstance() != null) ? request.getGameInstance().getId() : null;
+                    Integer gameId = (request.getRequestedSet() != null) ? request.getRequestedSet().getId() : null;
+                    Integer instanceId = (request.getCollectionItem() != null) ? request.getCollectionItem().getId() : null;
                     return new BorrowRequestDto(
                             request.getId(),
                             requesterId,
@@ -559,7 +559,7 @@ public class BorrowRequestService {
         }
         
         // Check if the dates conflict with existing requests
-        if (!isGameAvailableForPeriod(existingRequest.getRequestedGame().getId(), 
+        if (!isGameAvailableForPeriod(existingRequest.getRequestedSet().getId(), 
                                       existingRequest.getStartDate(), 
                                       existingRequest.getEndDate(),
                                       existingRequest.getId())) {
@@ -573,8 +573,8 @@ public class BorrowRequestService {
         return new BorrowRequestDto(
             updatedRequest.getId(),
             updatedRequest.getRequester().getId(),
-            updatedRequest.getRequestedGame().getId(),
-            updatedRequest.getGameInstance().getId(),
+            updatedRequest.getRequestedSet().getId(),
+            updatedRequest.getCollectionItem().getId(),
             updatedRequest.getStartDate(),
             updatedRequest.getEndDate(),
             updatedRequest.getStatus().name(),
@@ -595,7 +595,7 @@ public class BorrowRequestService {
     private boolean isGameAvailableForPeriod(int gameId, Date startDate, Date endDate, int excludeRequestId) {
         // Get all approved borrow requests for this game that overlap with the period
         List<BorrowRequest> overlappingRequests = borrowRequestRepository
-            .findOverlappingApprovedRequestsForGame(gameId, startDate, endDate);
+            .findOverlappingApprovedRequests(gameId, startDate, endDate);
         
         // Exclude the current request being updated
         overlappingRequests = overlappingRequests.stream()

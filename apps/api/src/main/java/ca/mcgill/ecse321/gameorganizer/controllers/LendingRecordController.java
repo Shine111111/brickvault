@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 
 import ca.mcgill.ecse321.gameorganizer.models.LendingRecord;
 import ca.mcgill.ecse321.gameorganizer.models.LendingRecord.LendingStatus;
-import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
+
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.services.LendingRecordService;
 import ca.mcgill.ecse321.gameorganizer.services.AccountService;
@@ -177,7 +177,7 @@ public class LendingRecordController {
                 System.out.println("Error accessing authentication: " + e.getMessage());
             }
             
-            GameOwner owner = (GameOwner) accountService.getAccountById(ownerId);
+            Account owner = accountService.getAccountById(ownerId);
             List<LendingRecord> records = lendingRecordService.getLendingRecordsByOwner(owner);
             
             List<LendingRecordResponseDto> recordDtos = records.stream()
@@ -209,7 +209,7 @@ public class LendingRecordController {
             @PathVariable int ownerId,
             @PathVariable String status) {
         try {
-            GameOwner owner = (GameOwner) accountService.getAccountById(ownerId);
+            Account owner = accountService.getAccountById(ownerId);
             List<LendingRecord> allRecords = lendingRecordService.getLendingRecordsByOwner(owner);
             
             // Filter by status
@@ -249,7 +249,7 @@ public class LendingRecordController {
             }
 
             // Validate owner existence
-            GameOwner owner = (GameOwner) accountService.getAccountById(ownerId);
+            Account owner = accountService.getAccountById(ownerId);
 
             List<LendingRecord> records = lendingRecordService.getLendingRecordsByDateRange(startDate, endDate);
             
@@ -533,7 +533,7 @@ public class LendingRecordController {
             }
             
             // Get the game owner
-            GameOwner owner = (GameOwner) accountService.getAccountById(ownerId);
+            Account owner = accountService.getAccountById(ownerId);
             
             // Use our improved service method that handles the entity retrieval
             ResponseEntity<String> result = lendingRecordService.createLendingRecordFromRequestId(
@@ -612,7 +612,7 @@ public class LendingRecordController {
     @GetMapping("/owner/{ownerId}/overdue")
     public ResponseEntity<List<LendingRecordResponseDto>> getOverdueRecordsByOwner(@PathVariable int ownerId) {
         try {
-            GameOwner owner = (GameOwner) accountService.getAccountById(ownerId);
+            Account owner = accountService.getAccountById(ownerId);
             List<LendingRecord> allRecords = lendingRecordService.getLendingRecordsByOwner(owner);
             
             // Filter to only include overdue records
@@ -727,8 +727,8 @@ public class LendingRecordController {
             // Check if user has a closed (returned) lending record for this game
             boolean hasReturnedGame = userRecords.stream()
                 .anyMatch(record -> record.getRequest() != null 
-                    && record.getRequest().getRequestedGame() != null 
-                    && record.getRequest().getRequestedGame().getId() == gameId
+                    && record.getRequest().getRequestedSet() != null 
+                    && record.getRequest().getRequestedSet().getId() == gameId
                     && record.getStatus() == LendingStatus.CLOSED);
             
             return ResponseEntity.ok(Map.of("canReview", hasReturnedGame));
@@ -746,11 +746,12 @@ public class LendingRecordController {
      */
     private LendingRecordResponseDto convertToResponseDto(LendingRecord record) {
         // Create game info
-        LendingRecordResponseDto.GameInfo gameInfo = new LendingRecordResponseDto.GameInfo(
-                record.getRequest().getRequestedGame().getId(),
-                record.getRequest().getRequestedGame().getName(),
-                record.getRequest().getRequestedGame().getCategory(),
-                record.getRequest().getRequestedGame().getImage());
+        LendingRecordResponseDto.SetInfo setInfo = new LendingRecordResponseDto.SetInfo(
+                record.getRequest().getRequestedSet().getId(),
+                record.getRequest().getRequestedSet().getSetNumber(),
+                record.getRequest().getRequestedSet().getName(),
+                record.getRequest().getRequestedSet().getTheme(),
+                record.getRequest().getRequestedSet().getImageUrl());
         
         // Create borrower info
         LendingRecordResponseDto.UserInfo borrowerInfo = new LendingRecordResponseDto.UserInfo(
@@ -771,7 +772,7 @@ public class LendingRecordController {
                     record.getStartDate(),
                     record.getEndDate(),
                     record.getStatus().toString(),
-                    gameInfo,
+                    setInfo,
                     borrowerInfo,
                     ownerInfo,
                     record.getDurationInDays(),
@@ -785,7 +786,7 @@ public class LendingRecordController {
                     record.getStartDate(),
                     record.getEndDate(),
                     record.getStatus().toString(),
-                    gameInfo,
+                    setInfo,
                     borrowerInfo,
                     ownerInfo,
                     record.getDurationInDays());

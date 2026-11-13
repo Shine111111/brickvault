@@ -53,14 +53,14 @@ import ca.mcgill.ecse321.gameorganizer.exceptions.ForbiddenException;
 import ca.mcgill.ecse321.gameorganizer.exceptions.UnauthedException;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequest;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 import ca.mcgill.ecse321.gameorganizer.models.LendingRecord;
 import ca.mcgill.ecse321.gameorganizer.models.LendingRecord.LendingStatus;
 import ca.mcgill.ecse321.gameorganizer.repositories.BorrowRequestRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.LendingRecordRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameInstanceRepository;
-import ca.mcgill.ecse321.gameorganizer.models.GameInstance;
+import ca.mcgill.ecse321.gameorganizer.repositories.CollectionItemRepository;
+import ca.mcgill.ecse321.gameorganizer.models.CollectionItem;
 import ca.mcgill.ecse321.gameorganizer.services.LendingRecordService;
 import org.springframework.test.context.ContextConfiguration;
 import ca.mcgill.ecse321.gameorganizer.TestJwtConfig;
@@ -79,7 +79,7 @@ public class LendingRecordServiceTest {
     private AccountRepository accountRepository; // Mock AccountRepository
 
     @Mock
-    private GameInstanceRepository gameInstanceRepository;
+    private CollectionItemRepository collectionItemRepository;
 
     @Spy
     @InjectMocks
@@ -91,7 +91,7 @@ public class LendingRecordServiceTest {
     private static final int VALID_USER_ID = 3;
 
     private GameOwner owner;
-    private Game game;
+    private LegoSet game;
     private Account borrower;
     private BorrowRequest borrowRequest;
     private Date startDate;
@@ -103,8 +103,7 @@ public class LendingRecordServiceTest {
         // Setup test data
         owner = new GameOwner("Owner", "owner@test.com", "password");
         owner.setId(10);
-        game = new Game("Test Game", 2, 4, "test.jpg", new Date());
-        game.setOwner(owner);
+        game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10036", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         borrower = new Account("Borrower", "borrower@test.com", "password");
         borrower.setId(VALID_USER_ID);
         
@@ -113,7 +112,7 @@ public class LendingRecordServiceTest {
         
         borrowRequest = new BorrowRequest();
         borrowRequest.setId(VALID_REQUEST_ID);
-        borrowRequest.setRequestedGame(game);
+        borrowRequest.setRequestedSet(game);
         borrowRequest.setRequester(borrower);
         
         record = new LendingRecord(startDate, endDate, LendingStatus.ACTIVE, borrowRequest, owner);

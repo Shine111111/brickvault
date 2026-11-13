@@ -69,66 +69,43 @@ public class Event {
     private int maxParticipants;
 
     /**
-     * The main game that will be featured at this event.
+     * The main LEGO set that will be featured at this event.
      */
-    @ManyToOne // Event must have a featured game
-    @JsonIgnoreProperties("owner")
-    private Game featuredGame;
+    @ManyToOne
+    private LegoSet featuredSet;
 
     /**
      * The account of the user who is hosting the event.
      */
-    @ManyToOne // Event must have a host
+    @ManyToOne
     @JsonIgnoreProperties({"password", "resetPasswordToken", "resetPasswordTokenExpiry"})
     private Account host;
-    
+
     /**
-     * The specific game instance being used for the event (especially for borrowed games).
-     * Optional: Can be null if the host uses their general owned game without specifying a copy.
+     * Optional specific collection item being used for the event.
      */
     @ManyToOne(optional = true)
-    private GameInstance gameInstance;
+    private CollectionItem collectionItem;
 
-    /**
-     * Creates a new event with the specified details. (except host)
-     *
-     * @param aTitle The title of the event
-     * @param aDateTime The date and time when the event will occur (use java.util.Date)
-     * @param aLocation The location where the event will be held
-     * @param aDescription A description of the event
-     * @param aMaxParticipants The maximum number of participants allowed
-     * @param aFeaturedGame The game that will be featured at the event
-     */
-    public Event(String aTitle, Date aDateTime, String aLocation, String aDescription, int aMaxParticipants, Game aFeaturedGame) {
+    public Event(String aTitle, Date aDateTime, String aLocation, String aDescription, int aMaxParticipants, LegoSet aFeaturedSet) {
         title = aTitle;
-        dateTime = aDateTime; // Use java.util.Date directly
+        dateTime = aDateTime;
         location = aLocation;
         description = aDescription;
         maxParticipants = aMaxParticipants;
-        featuredGame = aFeaturedGame;
-        currentNumberParticipants = 0; 
+        featuredSet = aFeaturedSet;
+        currentNumberParticipants = 0;
     }
 
-    /**
-     * Creates a new event with the specified details.
-     *
-     * @param aTitle The title of the event
-     * @param aDateTime The date and time when the event will occur (use java.util.Date)
-     * @param aLocation The location where the event will be held
-     * @param aDescription A description of the event
-     * @param aMaxParticipants The maximum number of participants allowed
-     * @param aFeaturedGame The game that will be featured at the event
-     * @param host The account of the user hosting the event
-     */
-    public Event(String aTitle, Date aDateTime, String aLocation, String aDescription, int aMaxParticipants, Game aFeaturedGame, Account aHost) {
+    public Event(String aTitle, Date aDateTime, String aLocation, String aDescription, int aMaxParticipants, LegoSet aFeaturedSet, Account aHost) {
         title = aTitle;
-        dateTime = aDateTime; // Use java.util.Date directly
+        dateTime = aDateTime;
         location = aLocation;
         description = aDescription;
         maxParticipants = aMaxParticipants;
-        featuredGame = aFeaturedGame;
+        featuredSet = aFeaturedSet;
         this.host = aHost;
-        currentNumberParticipants = 0; 
+        currentNumberParticipants = 0;
     }
 
     /**
@@ -146,6 +123,6 @@ public class Event {
             "maxParticipants" + ":" + getMaxParticipants() + "," +
             "currentNumberParticipants" + ":" + getCurrentNumberParticipants() + "]" + System.getProperties().getProperty("line.separator") +
             "  " + "dateTime" + "=" + (getDateTime() != null ? !getDateTime().equals(this) ? getDateTime().toString().replaceAll("  ", "    ") : "this" : "null") + System.getProperties().getProperty("line.separator") +
-            "  " + "featuredGame = " + (getFeaturedGame() != null ? Integer.toHexString(System.identityHashCode(getFeaturedGame())) : "null");
+            "  " + "featuredSet = " + (getFeaturedSet() != null ? Integer.toHexString(System.identityHashCode(getFeaturedSet())) : "null");
     }
 }

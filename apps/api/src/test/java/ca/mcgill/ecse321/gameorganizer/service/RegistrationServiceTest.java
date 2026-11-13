@@ -42,7 +42,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.Event;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.Registration;
 import ca.mcgill.ecse321.gameorganizer.repositories.RegistrationRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository; // Keep one import
@@ -86,12 +86,12 @@ public class RegistrationServiceTest {
         attendee.setEmail("attendee@test.com"); // Explicitly set email to ensure it's not null
         attendee.setPassword("password");
         
-        Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10023", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         Account host = new Account();
         host.setName("Host");
         host.setEmail("host@test.com");
         
-        Event event = new Event("Game Night", new Date(), "Location", "Description", 10, game, host);
+        Event event = new Event("LegoSet Night", new Date(), "Location", "Description", 10, game, host);
         UUID eventId = UUID.randomUUID(); // Generate UUID
         event.setId(eventId); // Set UUID on event
         event.setCurrentNumberParticipants(5); // Set current participants
@@ -196,13 +196,13 @@ public class RegistrationServiceTest {
             Account newAttendee = new Account("New Attendee", "new@test.com", "password");
             newAttendee.setId(100);
             // Define original event
-            Game game = new Game("Original Game", 1, 5, "orig.jpg", new Date());
+            LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10024", "Original LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
             Account host = new Account("Host", "host@test.com", "hostpwd");
             Event event = new Event("Original Event", new Date(), "Original Location", "Original Desc", 5, game, host);
             // event.setId(VALID_EVENT_ID); // ID not needed for this test logic
 
             // Define unused new event data (kept for reference, but not used in update call)
-            Game newGame = new Game("New Game", 2, 4, "new.jpg", new Date());
+            LegoSet newGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10025", "New LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
             Event newEvent = new Event("New Event", new Date(), "New Location", "New Description", 10, newGame, new Account());
 
             Registration existingRegistration = new Registration(new Date());
@@ -254,8 +254,8 @@ public class RegistrationServiceTest {
 
         try {
             // Setup Mocks and other test data
-            Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
-            Event event = new Event("Game Night", new Date(), "Location", "Description", 10, game, new Account());
+            LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10026", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
+            Event event = new Event("LegoSet Night", new Date(), "Location", "Description", 10, game, new Account());
             event.setCurrentNumberParticipants(5); // Ensure participants > 0
 
             Registration registration = new Registration(new Date());

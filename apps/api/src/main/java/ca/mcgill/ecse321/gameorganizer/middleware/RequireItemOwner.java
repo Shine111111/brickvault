@@ -5,7 +5,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Marks a controller or handler method as requiring ownership of the target CollectionItem.
+ */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface RequireGameOwner {
+public @interface RequireItemOwner {
 }

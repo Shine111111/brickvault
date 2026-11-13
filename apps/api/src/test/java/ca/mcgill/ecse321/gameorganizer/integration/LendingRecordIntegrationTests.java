@@ -38,13 +38,13 @@ import ca.mcgill.ecse321.gameorganizer.models.LendingRecord.LendingStatus;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequest;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequestStatus; // Added import
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 // Repositories
 import ca.mcgill.ecse321.gameorganizer.repositories.LendingRecordRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.BorrowRequestRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.ReviewRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.EventRepository;
 
@@ -74,13 +74,13 @@ public class LendingRecordIntegrationTests {
     @Autowired
     private BorrowRequestRepository borrowRequestRepository;
     @Autowired
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
     private GameOwner testOwner;
     private Account testBorrower;
-    private Game dummyGame;
+    private LegoSet dummyGame;
     private BorrowRequest dummyRequest;
     private LendingRecord testRecord;
 
@@ -117,19 +117,19 @@ public class LendingRecordIntegrationTests {
             testBorrower = accountRepository.save(testBorrower);
 
             // Create game with unique name
-            String uniqueGameName = "Dummy Game " + System.currentTimeMillis();
-            dummyGame = new Game();
+            String uniqueGameName = "Dummy LegoSet " + System.currentTimeMillis();
+            dummyGame = new LegoSet();
+            dummyGame.setSetNumber("99901-" + System.currentTimeMillis());
             dummyGame.setName(uniqueGameName);
-            dummyGame.setMinPlayers(2);
-            dummyGame.setMaxPlayers(4);
-            dummyGame.setImage("dummy.jpg");
-            dummyGame.setDateAdded(new Date(System.currentTimeMillis()));
-            dummyGame.setOwner(testOwner);
-            dummyGame = gameRepository.save(dummyGame);
+            dummyGame.setTheme("Ninjago");
+            dummyGame.setPieceCount(500);
+            dummyGame.setReleaseYear(2023);
+            dummyGame.setImageUrl("dummy.jpg");
+            dummyGame = legoSetRepository.save(dummyGame);
 
             // Important: Make sure the game is fully saved before creating a borrow request
             dummyRequest = new BorrowRequest();
-            dummyRequest.setRequestedGame(dummyGame); // Use the saved game
+            dummyRequest.setRequestedSet(dummyGame); // Use the saved game
             dummyRequest.setRequester(testBorrower);
             dummyRequest.setStatus(BorrowRequestStatus.APPROVED); // Assume request is approved
             dummyRequest = borrowRequestRepository.save(dummyRequest);
@@ -165,7 +165,7 @@ public class LendingRecordIntegrationTests {
             borrowRequestRepository.deleteAll();
             
             // Then games
-            gameRepository.deleteAll();
+            legoSetRepository.deleteAll();
             
             // Finally accounts
             accountRepository.deleteAll();
@@ -183,7 +183,7 @@ public class LendingRecordIntegrationTests {
     public void testCreateLendingRecordSuccess() throws Exception {
         // Create a new borrow request with the already saved game
         BorrowRequest newRequest = new BorrowRequest();
-        newRequest.setRequestedGame(dummyGame); // Use the existing saved game
+        newRequest.setRequestedSet(dummyGame); // Use the existing saved game
         newRequest.setRequester(testBorrower);
         newRequest.setStatus(BorrowRequestStatus.APPROVED); // Must be approved
         newRequest = borrowRequestRepository.save(newRequest); // Save request to get ID
@@ -436,7 +436,7 @@ public class LendingRecordIntegrationTests {
         // First change to CLOSED
         mockMvc.perform(MockMvcRequestBuilders.post(BASE_URL + "/" + testRecord.getId() + "/confirm-return")
                 .param("isDamaged", "false")
-                .param("reason", "Game returned in good condition") // Add reason parameter
+                .param("reason", "LegoSet returned in good condition") // Add reason parameter
                 .with(user(testOwner.getEmail()).password(TEST_PASSWORD).roles("GAME_OWNER")))
             .andExpect(status().isNotFound()); // Updated to 404 NOT_FOUND per error message
     }
@@ -457,7 +457,7 @@ public class LendingRecordIntegrationTests {
                 .param("isDamaged", "true")
                 .param("damageNotes", "The game box is damaged")
                 .param("damageSeverity", "2")
-                .param("reason", "Game returned with moderate damage") // Add reason parameter
+                .param("reason", "LegoSet returned with moderate damage") // Add reason parameter
                 .with(user(testOwner.getEmail()).password(TEST_PASSWORD).roles("GAME_OWNER"))) // Use actual owner email
             .andExpect(status().isNotFound()); // Updated to 404 NOT_FOUND per error message
     }
@@ -493,7 +493,7 @@ public class LendingRecordIntegrationTests {
         // First close the record
         mockMvc.perform(MockMvcRequestBuilders.post(BASE_URL + "/" + testRecord.getId() + "/confirm-return")
                 .param("isDamaged", "false")
-                .param("reason", "Game returned in good condition") // Add reason parameter
+                .param("reason", "LegoSet returned in good condition") // Add reason parameter
                 .with(user(testOwner.getEmail()).password(TEST_PASSWORD).roles("GAME_OWNER")))
             .andExpect(status().isNotFound()); // Updated to 404 NOT_FOUND per error message
     }

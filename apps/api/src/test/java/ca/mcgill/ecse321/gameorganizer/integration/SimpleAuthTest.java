@@ -3,13 +3,13 @@ package ca.mcgill.ecse321.gameorganizer.integration;
 import ca.mcgill.ecse321.gameorganizer.dto.request.AuthenticationDTO;
 import ca.mcgill.ecse321.gameorganizer.dto.request.CreateEventRequest;
 import ca.mcgill.ecse321.gameorganizer.dto.response.UserSummaryDto;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 import java.util.List;
 import ca.mcgill.ecse321.gameorganizer.models.Event;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.EventRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,7 +56,7 @@ public class SimpleAuthTest {
     private AccountRepository accountRepository;
     
     @Autowired
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
     
     
     @Autowired
@@ -72,7 +72,7 @@ public class SimpleAuthTest {
     public void setup() {
         // Clean repositories
         eventRepository.deleteAll();
-        gameRepository.deleteAll();
+        legoSetRepository.deleteAll();
         accountRepository.deleteAll();
         
         // Create test user as a GameOwner 
@@ -87,7 +87,7 @@ public class SimpleAuthTest {
     @AfterEach
     public void cleanup() {
         eventRepository.deleteAll();
-        gameRepository.deleteAll();
+        legoSetRepository.deleteAll();
         accountRepository.deleteAll();
         
         // Clear security context
@@ -188,11 +188,10 @@ public class SimpleAuthTest {
     @Test
     public void testCreateEventWithService() {
         // Create a game for the event
-        Game testGame = new Game("Test Game", 2, 4, "test.jpg", new java.util.Date());
-        testGame.setOwner(testUser);
-        testGame = gameRepository.save(testGame);
+        LegoSet testGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10020", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
+        testGame = legoSetRepository.save(testGame);
         
-        System.out.println("Game created successfully: " + testGame.getId());
+        System.out.println("LegoSet created successfully: " + testGame.getId());
         
         // Authenticate the user before calling the service
         authenticateUser(testUser.getEmail());
@@ -204,7 +203,7 @@ public class SimpleAuthTest {
         request.setLocation("New Location");
         request.setDescription("New Description");
         request.setMaxParticipants(20);
-        request.setFeaturedGame(testGame);
+        request.setFeaturedSet(testGame);
         request.setHost(testUser);
         
         // Call service directly

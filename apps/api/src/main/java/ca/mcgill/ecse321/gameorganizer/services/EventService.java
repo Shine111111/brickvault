@@ -15,14 +15,14 @@ import org.springframework.transaction.annotation.Transactional;
 import ca.mcgill.ecse321.gameorganizer.dto.request.CreateEventRequest;
 import ca.mcgill.ecse321.gameorganizer.exceptions.ForbiddenException;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
+import ca.mcgill.ecse321.gameorganizer.models.CollectionItem;
 import ca.mcgill.ecse321.gameorganizer.models.Event;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
-import ca.mcgill.ecse321.gameorganizer.models.GameInstance;
-import ca.mcgill.ecse321.gameorganizer.models.Registration; // Import added
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
+import ca.mcgill.ecse321.gameorganizer.models.Registration;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.CollectionItemRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.EventRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameInstanceRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.RegistrationRepository;
 
 @Service
@@ -37,22 +37,22 @@ public class EventService {
     private AccountRepository accountRepository;
 
     @Autowired
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
 
     @Autowired
-    private GameInstanceRepository gameInstanceRepository;
+    private CollectionItemRepository collectionItemRepository;
 
-    private final RegistrationRepository registrationRepository; // Added repository
+    private final RegistrationRepository registrationRepository;
 
     @Autowired
     public EventService(EventRepository eventRepository, AccountRepository accountRepository,
-                        GameRepository gameRepository, GameInstanceRepository gameInstanceRepository,
-                        RegistrationRepository registrationRepository) { // Added to constructor
+                        LegoSetRepository legoSetRepository, CollectionItemRepository collectionItemRepository,
+                        RegistrationRepository registrationRepository) {
         this.eventRepository = eventRepository;
         this.accountRepository = accountRepository;
-        this.gameRepository = gameRepository;
-        this.gameInstanceRepository = gameInstanceRepository;
-        this.registrationRepository = registrationRepository; // Assign repository
+        this.legoSetRepository = legoSetRepository;
+        this.collectionItemRepository = collectionItemRepository;
+        this.registrationRepository = registrationRepository;
     }
 
 
@@ -76,8 +76,8 @@ public class EventService {
         if (newEvent.getMaxParticipants() <= 0) {
             throw new IllegalArgumentException("Maximum participants must be greater than 0");
         }
-        if (newEvent.getFeaturedGame() == null || newEvent.getFeaturedGame().getId() <= 0) {
-            throw new IllegalArgumentException("Featured game must be specified");
+        if (newEvent.getFeaturedSet() == null || newEvent.getFeaturedSet().getId() <= 0) {
+            throw new IllegalArgumentException("Featured LEGO set must be specified");
         }
 
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -86,34 +86,29 @@ public class EventService {
                 .orElseThrow(() -> new IllegalArgumentException("Authenticated user account not found."));
         logger.debug("DEBUG SERVICE: Found host account: {}", host.getEmail());
 
-        int gameId = newEvent.getFeaturedGame().getId();
-        Game featuredGameEntity = gameRepository.findById(gameId)
-                .orElseThrow(() -> new IllegalArgumentException("Featured game with ID " + gameId + " not found."));
-        logger.debug("DEBUG SERVICE: Found featured game: {}", featuredGameEntity.getName());
+        int setId = newEvent.getFeaturedSet().getId();
+        LegoSet featuredSetEntity = legoSetRepository.findById(setId)
+                .orElseThrow(() -> new IllegalArgumentException("Featured LEGO set with ID " + setId + " not found."));
+        logger.debug("DEBUG SERVICE: Found featured set: {}", featuredSetEntity.getName());
 
         Event e = new Event(
                 newEvent.getTitle(),
-                newEvent.getDateTime(), // Pass java.util.Date directly
+                newEvent.getDateTime(),
                 newEvent.getLocation(),
                 newEvent.getDescription(),
                 newEvent.getMaxParticipants(),
-                featuredGameEntity, 
-                host 
+                featuredSetEntity,
+                host
         );
-        
-        // Handle gameInstanceId if provided (for borrowed games)
-        if (newEvent.getGameInstanceId() != null) {
-            logger.debug("DEBUG SERVICE: Handling game instance ID: {}", newEvent.getGameInstanceId());
-            GameInstance instance = gameInstanceRepository.findById(newEvent.getGameInstanceId())
-                .orElseThrow(() -> new IllegalArgumentException("Game instance with ID " + newEvent.getGameInstanceId() + " not found."));
-            logger.debug("DEBUG SERVICE: Found game instance: {}", instance.getId());
-            // Optional: Add validation to ensure the instance belongs to the featuredGameEntity
-            if (instance.getGame().getId() != featuredGameEntity.getId()) {
-                 logger.error("ERROR SERVICE: Game instance {} does not match featured game {}", instance.getId(), featuredGameEntity.getId());
-                 throw new IllegalArgumentException("Provided game instance does not match the featured game.");
+
+        if (newEvent.getCollectionItemId() != null) {
+            logger.debug("DEBUG SERVICE: Handling collection item ID: {}", newEvent.getCollectionItemId());
+            CollectionItem item = collectionItemRepository.findById(newEvent.getCollectionItemId())
+                .orElseThrow(() -> new IllegalArgumentException("Collection item with ID " + newEvent.getCollectionItemId() + " not found."));
+            if (item.getLegoSet().getId() != featuredSetEntity.getId()) {
+                 throw new IllegalArgumentException("Provided collection item does not match the featured LEGO set.");
             }
-            e.setGameInstance(instance);
-            logger.debug("DEBUG SERVICE: Set game instance for event");
+            e.setCollectionItem(item);
         }
 
         logger.debug("DEBUG SERVICE: Created event object, saving to repository");
@@ -265,21 +260,13 @@ public class EventService {
      * @throws IllegalArgumentException if the game name is empty
      */
     @Transactional(readOnly = true)
-    public List<Event> findEventsByGameName(String gameName) {
-        logger.debug("DEBUG SERVICE: Finding events by game name: {}", gameName);
-        if (gameName == null || gameName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Game name cannot be empty");
+    public List<Event> findEventsBySetName(String setName) {
+        if (setName == null || setName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Set name cannot be empty");
         }
-        return eventRepository.findEventByFeaturedGameName(gameName);
+        return eventRepository.findEventByFeaturedSetName(setName);
     }
-    
-    /**
-     * Find events by location containing the specified text
-     * 
-     * @param locationText the text to search for in event locations
-     * @return list of events with locations containing the specified text
-     * @throws IllegalArgumentException if the location text is empty
-     */
+
     @Transactional(readOnly = true)
     public List<Event> findEventsByLocationContaining(String locationText) {
         logger.debug("DEBUG SERVICE: Finding events by location containing: {}", locationText);
@@ -287,21 +274,5 @@ public class EventService {
             throw new IllegalArgumentException("Location search text cannot be empty");
         }
         return eventRepository.findEventByLocationContaining(locationText);
-    }
-    
-    /**
-     * Find events by minimum number of players for the featured game
-     * 
-     * @param minPlayers the minimum number of players
-     * @return list of events with featured games requiring at least the specified number of players
-     * @throws IllegalArgumentException if minPlayers is less than 1
-     */
-    @Transactional(readOnly = true)
-    public List<Event> findEventsByGameMinPlayers(int minPlayers) {
-        logger.debug("DEBUG SERVICE: Finding events by game min players: {}", minPlayers);
-        if (minPlayers < 1) {
-            throw new IllegalArgumentException("Minimum players must be at least 1");
-        }
-        return eventRepository.findByFeaturedGameMinPlayersGreaterThanEqual(minPlayers);
     }
 }

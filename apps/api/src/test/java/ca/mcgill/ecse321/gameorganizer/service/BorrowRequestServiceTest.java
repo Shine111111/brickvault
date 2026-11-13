@@ -41,18 +41,18 @@ import ca.mcgill.ecse321.gameorganizer.dto.request.CreateBorrowRequestDto;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequest;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequestStatus;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.BorrowRequestRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameInstanceRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.CollectionItemRepository;
 import ca.mcgill.ecse321.gameorganizer.services.LendingRecordService; // Import LendingRecordService
 import ca.mcgill.ecse321.gameorganizer.services.BorrowRequestService;
 import org.springframework.test.context.ContextConfiguration;
 import ca.mcgill.ecse321.gameorganizer.TestJwtConfig;
 import ca.mcgill.ecse321.gameorganizer.exceptions.UnauthedException;
-import ca.mcgill.ecse321.gameorganizer.models.GameInstance;
+import ca.mcgill.ecse321.gameorganizer.models.CollectionItem;
 
 @ExtendWith(MockitoExtension.class)
 @ContextConfiguration(initializers = TestJwtConfig.Initializer.class)
@@ -62,7 +62,7 @@ public class BorrowRequestServiceTest {
     private BorrowRequestRepository borrowRequestRepository;
 
     @Mock
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
 
     @Mock
     private AccountRepository accountRepository;
@@ -71,7 +71,7 @@ public class BorrowRequestServiceTest {
     private LendingRecordService lendingRecordService;
 
     @Mock
-    private GameInstanceRepository gameInstanceRepository;
+    private CollectionItemRepository collectionItemRepository;
 
     @Spy
     @InjectMocks
@@ -98,13 +98,11 @@ public class BorrowRequestServiceTest {
         );
 
         GameOwner owner = new GameOwner("Owner", "owner@test.com", "password");
-        Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("20001", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game.setId(VALID_GAME_ID);
-        game.setOwner(owner);
-
-        GameInstance gameInstance = new GameInstance();
+        CollectionItem gameInstance = new CollectionItem();
         gameInstance.setId(VALID_GAME_INSTANCE_ID);
-        gameInstance.setGame(game);
+        gameInstance.setLegoSet(game);
         gameInstance.setOwner(owner);
         gameInstance.setAvailable(true);
 
@@ -113,13 +111,13 @@ public class BorrowRequestServiceTest {
 
         BorrowRequest savedRequest = new BorrowRequest();
         savedRequest.setId(VALID_REQUEST_ID);
-        savedRequest.setRequestedGame(game);
+        savedRequest.setRequestedSet(game);
         savedRequest.setRequester(requester);
         savedRequest.setStartDate(startDate);
         savedRequest.setEndDate(endDate);
         savedRequest.setStatus(BorrowRequestStatus.PENDING);
         savedRequest.setRequestDate(new Date());
-        savedRequest.setGameInstance(gameInstance);
+        savedRequest.setCollectionItem(gameInstance);
 
         // Mock authentication
         Authentication authentication = mock(Authentication.class);
@@ -131,9 +129,9 @@ public class BorrowRequestServiceTest {
 
         try {
             when(accountRepository.findByEmail(requester.getEmail())).thenReturn(Optional.of(requester));
-            when(gameRepository.findById(VALID_GAME_ID)).thenReturn(Optional.of(game));
-            when(gameInstanceRepository.findById(VALID_GAME_INSTANCE_ID)).thenReturn(Optional.of(gameInstance));
-            when(borrowRequestRepository.findOverlappingApprovedRequestsForGameInstance(VALID_GAME_INSTANCE_ID, startDate, endDate))
+            when(legoSetRepository.findById(VALID_GAME_ID)).thenReturn(Optional.of(game));
+            when(collectionItemRepository.findById(VALID_GAME_INSTANCE_ID)).thenReturn(Optional.of(gameInstance));
+            when(borrowRequestRepository.findOverlappingApprovedRequestsForCollectionItem(VALID_GAME_INSTANCE_ID, startDate, endDate))
                     .thenReturn(new ArrayList<>());
             when(borrowRequestRepository.save(any(BorrowRequest.class))).thenReturn(savedRequest);
 
@@ -143,13 +141,13 @@ public class BorrowRequestServiceTest {
             // Verify
             assertNotNull(result);
             assertEquals(VALID_REQUEST_ID, result.getId());
-            assertEquals(VALID_GAME_ID, result.getRequestedGameId());
+            assertEquals(VALID_GAME_ID, result.getRequestedSetId());
             assertEquals(VALID_REQUESTER_ID, result.getRequesterId());
-            assertEquals(VALID_GAME_INSTANCE_ID, result.getGameInstanceId());
+            assertEquals(VALID_GAME_INSTANCE_ID, result.getCollectionItemId());
             assertEquals("PENDING", result.getStatus());
             verify(borrowRequestRepository).save(any(BorrowRequest.class));
             verify(accountRepository).findByEmail(requester.getEmail());
-            verify(gameInstanceRepository).findById(VALID_GAME_INSTANCE_ID);
+            verify(collectionItemRepository).findById(VALID_GAME_INSTANCE_ID);
         } finally {
             SecurityContextHolder.clearContext(); // Clean up security context
         }
@@ -181,7 +179,7 @@ public class BorrowRequestServiceTest {
 
         try {
             when(accountRepository.findByEmail(requester.getEmail())).thenReturn(Optional.of(requester));
-            when(gameRepository.findById(VALID_GAME_ID)).thenReturn(Optional.empty());
+            when(legoSetRepository.findById(VALID_GAME_ID)).thenReturn(Optional.empty());
 
             // Test & Verify
             assertThrows(IllegalArgumentException.class, () -> borrowRequestService.createBorrowRequest(requestDto));
@@ -218,7 +216,7 @@ public class BorrowRequestServiceTest {
         try {
             when(accountRepository.findByEmail(requester.getEmail())).thenReturn(Optional.empty());
             // Use lenient() to avoid UnnecessaryStubbingException
-            lenient().when(gameRepository.findById(VALID_GAME_ID)).thenReturn(Optional.of(new Game()));
+            lenient().when(legoSetRepository.findById(VALID_GAME_ID)).thenReturn(Optional.of(new LegoSet()));
 
             // Test & Verify - updated to expect UnauthedException
             assertThrows(UnauthedException.class, () -> borrowRequestService.createBorrowRequest(requestDto));
@@ -241,10 +239,9 @@ public class BorrowRequestServiceTest {
             endDate
         );
 
-        Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("20002", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         // Need to set owner for the game object used here as well if service logic requires it
         GameOwner owner = new GameOwner("Owner", "owner@test.com", "password");
-        game.setOwner(owner);
         Account requester = new Account("Requester", "requester@test.com", "password");
         requester.setId(VALID_REQUESTER_ID);
 
@@ -258,7 +255,7 @@ public class BorrowRequestServiceTest {
 
         try {
             when(accountRepository.findByEmail(requester.getEmail())).thenReturn(Optional.of(requester));
-            when(gameRepository.findById(VALID_GAME_ID)).thenReturn(Optional.of(game));
+            when(legoSetRepository.findById(VALID_GAME_ID)).thenReturn(Optional.of(game));
 
             // Test & Verify
             assertThrows(IllegalArgumentException.class, () -> borrowRequestService.createBorrowRequest(requestDto));
@@ -276,23 +273,21 @@ public class BorrowRequestServiceTest {
         
         // Need to set game and requester properly here too for consistency
         GameOwner owner = new GameOwner("Owner", "owner@test.com", "password");
-        Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
-        game.setOwner(owner);
-        
-        GameInstance gameInstance = new GameInstance();
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("20003", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
+        CollectionItem gameInstance = new CollectionItem();
         gameInstance.setId(VALID_GAME_INSTANCE_ID);
-        gameInstance.setGame(game);
+        gameInstance.setLegoSet(game);
         gameInstance.setOwner(owner);
         
         Account requester = new Account("Requester", "requester@test.com", "password");
         
-        request.setRequestedGame(game);
+        request.setRequestedSet(game);
         request.setRequester(requester);
         request.setStatus(BorrowRequestStatus.PENDING);
         request.setStartDate(new Date()); // Add dates
         request.setEndDate(new Date(System.currentTimeMillis() + 86400000));
         request.setRequestDate(new Date()); // Add request date
-        request.setGameInstance(gameInstance); // Set the game instance
+        request.setCollectionItem(gameInstance); // Set the game instance
 
         when(borrowRequestRepository.findBorrowRequestById(VALID_REQUEST_ID)).thenReturn(Optional.of(request));
 
@@ -303,7 +298,7 @@ public class BorrowRequestServiceTest {
         assertNotNull(result);
         assertEquals(VALID_REQUEST_ID, result.getId());
         assertEquals("PENDING", result.getStatus());
-        assertEquals(VALID_GAME_INSTANCE_ID, result.getGameInstanceId());
+        assertEquals(VALID_GAME_INSTANCE_ID, result.getCollectionItemId());
         verify(borrowRequestRepository).findBorrowRequestById(VALID_REQUEST_ID);
     }
 
@@ -322,18 +317,16 @@ public class BorrowRequestServiceTest {
         // Setup
         List<BorrowRequest> requests = new ArrayList<>();
         // Create test data
-        Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("20004", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game.setId(VALID_GAME_ID);
         GameOwner owner = new GameOwner("Owner", "owner@test.com", "password");
         owner.setId(99);
-        game.setOwner(owner);
-        
         Account requester = new Account("Requester", "requester@test.com", "password");
         requester.setId(VALID_REQUESTER_ID);
         
         BorrowRequest request = new BorrowRequest();
         request.setId(VALID_REQUEST_ID);
-        request.setRequestedGame(game);
+        request.setRequestedSet(game);
         request.setRequester(requester);
         request.setStatus(BorrowRequestStatus.PENDING);
         requests.add(request);
@@ -362,7 +355,7 @@ public class BorrowRequestServiceTest {
             assertNotNull(resultDtos);
             assertEquals(1, resultDtos.size());
             assertEquals(VALID_REQUEST_ID, resultDtos.get(0).getId());
-            assertEquals(VALID_GAME_ID, resultDtos.get(0).getRequestedGameId());
+            assertEquals(VALID_GAME_ID, resultDtos.get(0).getRequestedSetId());
             assertEquals(VALID_REQUESTER_ID, resultDtos.get(0).getRequesterId());
             verify(borrowRequestRepository).findAll();
         } finally {
@@ -389,44 +382,43 @@ public class BorrowRequestServiceTest {
             request.setId(VALID_REQUEST_ID);
             request.setStatus(BorrowRequestStatus.PENDING);
             
-            Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
+            LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("20005", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
             game.setId(VALID_GAME_ID);
-            game.setOwner(owner); // Set owner on game
             
-            GameInstance gameInstance = new GameInstance();
+            CollectionItem gameInstance = new CollectionItem();
             gameInstance.setId(VALID_GAME_INSTANCE_ID);
-            gameInstance.setGame(game);
+            gameInstance.setLegoSet(game);
             gameInstance.setOwner(owner);
             gameInstance.setAvailable(true); // Make sure instance is available
             
             Account requester = new Account("Requester", "requester@test.com", "password");
             requester.setId(VALID_REQUESTER_ID);
             
-            request.setRequestedGame(game);
+            request.setRequestedSet(game);
             request.setRequester(requester);
             request.setStartDate(new Date());
             request.setEndDate(new Date(System.currentTimeMillis() + 86400000));
             request.setRequestDate(new Date());
-            request.setGameInstance(gameInstance); // Set the game instance
+            request.setCollectionItem(gameInstance); // Set the game instance
 
             // Create list of game instances for the findByGame mock
-            List<GameInstance> gameInstances = new ArrayList<>();
+            List<CollectionItem> gameInstances = new ArrayList<>();
             gameInstances.add(gameInstance);
 
             // Make all necessary stubbing lenient to avoid UnnecessaryStubbingException
-            lenient().doReturn(true).when(borrowRequestService).isGameOwnerOfRequest(VALID_REQUEST_ID, owner.getEmail());
+            lenient().doReturn(true).when(borrowRequestService).isItemOwnerOfRequest(VALID_REQUEST_ID, owner.getEmail());
             
             // Required mocks
             when(borrowRequestRepository.findBorrowRequestById(VALID_REQUEST_ID)).thenReturn(Optional.of(request));
-            when(gameInstanceRepository.findByGame(game)).thenReturn(gameInstances);
+            when(collectionItemRepository.findByLegoSet(game)).thenReturn(gameInstances);
             
             // Use lenient() for stubs that might not be used in all execution paths
-            lenient().when(borrowRequestRepository.findOverlappingApprovedRequestsForGameInstance(
+            lenient().when(borrowRequestRepository.findOverlappingApprovedRequestsForCollectionItem(
                 VALID_GAME_INSTANCE_ID, request.getStartDate(), request.getEndDate())).thenReturn(new ArrayList<>());
             when(borrowRequestRepository.save(any(BorrowRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
             
             // Use lenient() for the lending record creation stub
-            lenient().when(lendingRecordService.createLendingRecord(any(Date.class), any(Date.class), any(BorrowRequest.class), any(GameOwner.class)))
+            lenient().when(lendingRecordService.createLendingRecord(any(Date.class), any(Date.class), any(BorrowRequest.class), any(Account.class)))
                 .thenReturn(ResponseEntity.ok("Lending record created successfully"));
 
             // Test
@@ -437,7 +429,7 @@ public class BorrowRequestServiceTest {
             assertEquals("APPROVED", result.getStatus());
             verify(borrowRequestRepository).findBorrowRequestById(VALID_REQUEST_ID);
             verify(borrowRequestRepository).save(any(BorrowRequest.class));
-            verify(lendingRecordService).createLendingRecord(any(Date.class), any(Date.class), any(BorrowRequest.class), any(GameOwner.class));
+            verify(lendingRecordService).createLendingRecord(any(Date.class), any(Date.class), any(BorrowRequest.class), any(Account.class));
         } finally {
             SecurityContextHolder.clearContext(); // Clean up security context
         }
@@ -462,14 +454,13 @@ public class BorrowRequestServiceTest {
             BorrowRequest request = new BorrowRequest();
             request.setId(VALID_REQUEST_ID);
             request.setStatus(BorrowRequestStatus.PENDING);
-            Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
-            game.setOwner(owner); // Set owner on game
-            request.setRequestedGame(game);
+            LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("20006", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
+            request.setRequestedSet(game);
             Account requester = new Account("Requester", "requester@test.com", "password");
             request.setRequester(requester);
             
             // Use doReturn for the spy method and make it lenient
-            lenient().doReturn(true).when(borrowRequestService).isGameOwnerOfRequest(VALID_REQUEST_ID, owner.getEmail());
+            lenient().doReturn(true).when(borrowRequestService).isItemOwnerOfRequest(VALID_REQUEST_ID, owner.getEmail());
             
             // Use lenient() to avoid UnnecessaryStubbingException
             lenient().when(borrowRequestRepository.findBorrowRequestById(VALID_REQUEST_ID)).thenReturn(Optional.of(request));

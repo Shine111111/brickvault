@@ -17,7 +17,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequest;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequestStatus;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 import ca.mcgill.ecse321.gameorganizer.models.LendingRecord;
 import ca.mcgill.ecse321.gameorganizer.repositories.LendingRecordRepository;
@@ -32,7 +32,7 @@ public class LendingRecordRepositoryTest {
     private LendingRecordRepository lendingRecordRepository;
 
     private GameOwner owner;
-    private Game game;
+    private LegoSet game;
     private Account borrower;
     private BorrowRequest request;
     private LendingRecord record;
@@ -48,8 +48,7 @@ public class LendingRecordRepositoryTest {
         owner = new GameOwner("Test Owner", "owner@test.com", "password123");
         owner = entityManager.persist(owner);
 
-        game = new Game("Test Game", 2, 4, "test.jpg", new Date());
-        game.setOwner(owner);
+        game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10002", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game = entityManager.persist(game);
 
         borrower = new Account("Test Borrower", "borrower@test.com", "password123");
@@ -156,7 +155,7 @@ public class LendingRecordRepositoryTest {
         
         // Verify that related entities still exist
         assertNotNull(entityManager.find(GameOwner.class, ownerId));
-        assertNotNull(entityManager.find(Game.class, gameId));
+        assertNotNull(entityManager.find(LegoSet.class, gameId));
         assertNotNull(entityManager.find(Account.class, borrowerId));
         assertNotNull(entityManager.find(BorrowRequest.class, requestId));
     }
@@ -175,7 +174,7 @@ public class LendingRecordRepositoryTest {
         assertEquals(request.getId(), found.getRequest().getId());
         
         // Test nested relationships
-        assertEquals(game.getId(), found.getRequest().getRequestedGame().getId());
+        assertEquals(game.getId(), found.getRequest().getRequestedSet().getId());
         assertEquals(borrower.getId(), found.getRequest().getRequester().getId());
     }
 

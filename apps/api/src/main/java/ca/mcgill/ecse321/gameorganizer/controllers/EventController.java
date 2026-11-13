@@ -140,7 +140,7 @@ public class EventController {
     @GetMapping("/by-game-name")
     public ResponseEntity<List<EventResponse>> getEventsByGameName(@RequestParam String gameName) {
         log.info("Received request to get events by game name: {}", gameName);
-        List<Event> events = eventService.findEventsByGameName(gameName);
+        List<Event> events = eventService.findEventsBySetName(gameName);
         List<EventResponse> eventResponses = events.stream()
             .map(EventResponse::new)
             .collect(Collectors.toList());

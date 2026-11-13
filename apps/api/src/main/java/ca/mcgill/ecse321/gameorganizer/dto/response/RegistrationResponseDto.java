@@ -5,7 +5,7 @@ import java.util.UUID;
 
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.Event;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.Registration;
 import lombok.Getter;
 import lombok.Data;
@@ -50,7 +50,7 @@ public class RegistrationResponseDto {
         private String description;
         private int currentNumberParticipants;
         private int maxParticipants;
-        private GameDto featuredGame;
+        private SetDto featuredSet;
         private AccountDto host;
         
         public EventDto(Event event) {
@@ -62,8 +62,8 @@ public class RegistrationResponseDto {
             this.currentNumberParticipants = event.getCurrentNumberParticipants();
             this.maxParticipants = event.getMaxParticipants();
             
-            if (event.getFeaturedGame() != null) {
-                this.featuredGame = new GameDto(event.getFeaturedGame());
+            if (event.getFeaturedSet() != null) {
+                this.featuredSet = new SetDto(event.getFeaturedSet());
             }
             
             if (event.getHost() != null) {
@@ -72,17 +72,18 @@ public class RegistrationResponseDto {
         }
     }
     
-    // Inner DTO class for Game to avoid circular references
     @Data
-    public static class GameDto {
+    public static class SetDto {
         private int id;
+        private String setNumber;
         private String name;
-        private String image;
+        private String imageUrl;
         
-        public GameDto(Game game) {
-            this.id = game.getId();
-            this.name = game.getName();
-            this.image = game.getImage();
+        public SetDto(LegoSet set) {
+            this.id = set.getId();
+            this.setNumber = set.getSetNumber();
+            this.name = set.getName();
+            this.imageUrl = set.getImageUrl();
         }
     }
     

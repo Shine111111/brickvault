@@ -25,6 +25,8 @@ dependencies {
     implementation 'jakarta.validation:jakarta.validation-api'
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'com.h2database:h2'
+    implementation 'org.flywaydb:flyway-core:10.17.0'
+    implementation 'org.flywaydb:flyway-database-postgresql:10.17.0'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     testImplementation 'com.h2database:h2'

@@ -10,7 +10,7 @@ import ca.mcgill.ecse321.gameorganizer.dto.request.LendingHistoryFilterDto;
 import ca.mcgill.ecse321.gameorganizer.dto.request.UpdateLendingRecordStatusDto;
 import ca.mcgill.ecse321.gameorganizer.dto.response.LendingRecordDto;
 import ca.mcgill.ecse321.gameorganizer.dto.response.LendingRecordResponseDto;
-import ca.mcgill.ecse321.gameorganizer.dto.response.LendingRecordResponseDto.GameInfo;
+import ca.mcgill.ecse321.gameorganizer.dto.response.LendingRecordResponseDto.SetInfo;
 import ca.mcgill.ecse321.gameorganizer.dto.response.LendingRecordResponseDto.UserInfo;
 
 /**
@@ -71,7 +71,7 @@ public class LendingRecordDtoTests {
         assertEquals(fromDate, dto1.getFromDate());
         assertEquals(toDate, dto1.getToDate());
         assertEquals("ACTIVE", dto1.getStatus());
-        assertEquals(Integer.valueOf(1), dto1.getGameId());
+        assertEquals(Integer.valueOf(1), dto1.getSetId());
         assertEquals(Integer.valueOf(2), dto1.getBorrowerId());
         
         // Create DTO with default constructor and setters
@@ -79,14 +79,14 @@ public class LendingRecordDtoTests {
         dto2.setFromDate(fromDate);
         dto2.setToDate(toDate);
         dto2.setStatus("OVERDUE");
-        dto2.setGameId(3);
+        dto2.setSetId(3);
         dto2.setBorrowerId(4);
         
         // Verify getters
         assertEquals(fromDate, dto2.getFromDate());
         assertEquals(toDate, dto2.getToDate());
         assertEquals("OVERDUE", dto2.getStatus());
-        assertEquals(Integer.valueOf(3), dto2.getGameId());
+        assertEquals(Integer.valueOf(3), dto2.getSetId());
         assertEquals(Integer.valueOf(4), dto2.getBorrowerId());
     }
     
@@ -125,7 +125,7 @@ public class LendingRecordDtoTests {
         // Create test data
         Date startDate = new Date();
         Date endDate = new Date(startDate.getTime() + 86400000 * 7); // 7 days later
-        GameInfo game = new GameInfo(1, "Test Game", "Strategy", null);
+        SetInfo game = new SetInfo(1, "71799", "Test LegoSet", "Ninjago", null);
         UserInfo borrower = new UserInfo(2, "Test Borrower", "borrower@test.com");
         UserInfo owner = new UserInfo(3, "Test Owner", "owner@test.com");
         
@@ -138,7 +138,7 @@ public class LendingRecordDtoTests {
         assertEquals(startDate, dto1.getStartDate());
         assertEquals(endDate, dto1.getEndDate());
         assertEquals("ACTIVE", dto1.getStatus());
-        assertEquals(game, dto1.getGame());
+        assertEquals(game, dto1.getLegoSet());
         assertEquals(borrower, dto1.getBorrower());
         assertEquals(owner, dto1.getOwner());
         assertEquals(7, dto1.getDurationInDays());
@@ -162,13 +162,14 @@ public class LendingRecordDtoTests {
     }
     
     @Test
-    public void testGameInfoInnerClass() {
-        // Test the GameInfo inner class of LendingRecordResponseDto
-        GameInfo gameInfo = new GameInfo(1, "Test Game", "Strategy", null);
+    public void testSetInfoInnerClass() {
+        // Test the SetInfo inner class of LendingRecordResponseDto
+        SetInfo gameInfo = new SetInfo(1, "71799", "NINJAGO City Markets", "Ninjago", null);
         
         assertEquals(1, gameInfo.getId());
-        assertEquals("Test Game", gameInfo.getName());
-        assertEquals("Strategy", gameInfo.getCategory());
+        assertEquals("71799", gameInfo.getSetNumber());
+        assertEquals("NINJAGO City Markets", gameInfo.getName());
+        assertEquals("Ninjago", gameInfo.getTheme());
     }
     
     @Test
@@ -186,7 +187,7 @@ public class LendingRecordDtoTests {
         // Create test data
         Date startDate = new Date();
         Date endDate = new Date(startDate.getTime() + 86400000 * 7); // 7 days later
-        GameInfo game = new GameInfo(1, "Test Game", "Strategy", null);
+        SetInfo game = new SetInfo(1, "71799", "Test LegoSet", "Ninjago", null);
         UserInfo borrower = new UserInfo(2, "Test Borrower", "borrower@test.com");
         UserInfo owner = new UserInfo(3, "Test Owner", "owner@test.com");
         

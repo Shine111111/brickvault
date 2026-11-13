@@ -41,11 +41,11 @@ import ca.mcgill.ecse321.gameorganizer.dto.request.CreateBorrowRequestDto;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequest;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequestStatus;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.BorrowRequestRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.LendingRecordRepository;
 import ca.mcgill.ecse321.gameorganizer.TestJwtConfig;
 
@@ -83,7 +83,7 @@ public class BorrowRequestIntegrationTests {
     private AccountRepository accountRepository;
 
     @Autowired
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
 
     @Autowired
     private LendingRecordRepository lendingRecordRepository;
@@ -96,7 +96,7 @@ public class BorrowRequestIntegrationTests {
 
     private GameOwner testOwner;
     private Account testRequester;
-    private Game testGame;
+    private LegoSet testGame;
     private BorrowRequest testRequest;
     private static final String BASE_URL = "/api/borrowrequests";
     private static final String OWNER_EMAIL = "owner@example.com";
@@ -107,7 +107,7 @@ public class BorrowRequestIntegrationTests {
     public void setup() {
         lendingRecordRepository.deleteAll();
         borrowRequestRepository.deleteAll();
-        gameRepository.deleteAll();
+        legoSetRepository.deleteAll();
         accountRepository.deleteAll();
 
         testOwner = new GameOwner("owner", OWNER_EMAIL, passwordEncoder.encode(TEST_PASSWORD));
@@ -118,10 +118,9 @@ public class BorrowRequestIntegrationTests {
         testRequester = accountRepository.save(testRequester);
         System.out.println("Created testRequester with ID: " + testRequester.getId() + ", email: " + testRequester.getEmail());
 
-        testGame = new Game("Test Game", 2, 4, "test.jpg", java.util.Date.from(Instant.now()));
-        testGame.setOwner(testOwner);
-        testGame = gameRepository.save(testGame);
-        System.out.println("Created testGame with ID: " + testGame.getId() + ", owner: " + testGame.getOwner().getEmail());
+        testGame = new LegoSet("99902", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
+        testGame = legoSetRepository.save(testGame);
+        System.out.println("Created testGame with ID: " + testGame.getId() + ", setNumber: " + testGame.getSetNumber());
 
         Date startDate = new Date(Instant.now().plus(1, ChronoUnit.DAYS).toEpochMilli());
         Date endDate = new Date(Instant.now().plus(2, ChronoUnit.DAYS).toEpochMilli());
@@ -137,7 +136,7 @@ public class BorrowRequestIntegrationTests {
     public void cleanupAndClearToken() {
         lendingRecordRepository.deleteAll();
         borrowRequestRepository.deleteAll();
-        gameRepository.deleteAll();
+        legoSetRepository.deleteAll();
         accountRepository.deleteAll();
         // No token to clear
     }

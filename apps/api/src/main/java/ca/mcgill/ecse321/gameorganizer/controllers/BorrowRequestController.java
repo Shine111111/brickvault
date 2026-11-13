@@ -34,7 +34,7 @@ import ca.mcgill.ecse321.gameorganizer.exceptions.UnauthedException; // Import
  * @author Rayan Baida
  */
 @RestController
-@RequestMapping("/api/borrowrequests")
+@RequestMapping({"/api/trade-requests", "/api/borrowrequests"})
 public class BorrowRequestController {
 
     private final BorrowRequestService borrowRequestService;

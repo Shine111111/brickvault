@@ -17,7 +17,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.Event;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.repositories.EventRepository;
 
 @DataJpaTest
@@ -43,7 +43,7 @@ public class EventRepositoryTests {
         String location = "Trottier 3rd floor";
         String description = "Dungeons and Dragons night";
         int maxParticipants = 10;
-        Game featuredGame = new Game("Dungeons and Dragons", 3, 6, "D&D.jpg", new Date());
+        LegoSet featuredGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10009", "Dungeons and Dragons", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
 
         // Save game first
         featuredGame = entityManager.persist(featuredGame);
@@ -67,7 +67,7 @@ public class EventRepositoryTests {
         assertEquals(location, retrieved.getLocation());
         assertEquals(description, retrieved.getDescription());
         assertEquals(maxParticipants, retrieved.getMaxParticipants());
-        assertEquals(featuredGame.getId(), retrieved.getFeaturedGame().getId());
+        assertEquals(featuredGame.getId(), retrieved.getFeaturedSet().getId());
     }
 
     @Test
@@ -79,7 +79,7 @@ public class EventRepositoryTests {
         String location = "Trottier 3rd floor";
         String description = "Dungeons and Dragons night";
         int maxParticipants = 10;
-        Game featuredGame = new Game("Dungeons and Dragons", 3, 6, "D&D.jpg", new Date());
+        LegoSet featuredGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10010", "Dungeons and Dragons", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
 
         // Save game first
         featuredGame = entityManager.persist(featuredGame);
@@ -104,7 +104,7 @@ public class EventRepositoryTests {
     @Test
     public void testFindByTitle() {
         // Create test data
-        Game featuredGame = new Game("Dungeons and Dragons", 3, 6, "D&D.jpg", new Date());
+        LegoSet featuredGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10011", "Dungeons and Dragons", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         featuredGame = entityManager.persist(featuredGame);
 
         String title1 = "D&D Night";
@@ -112,7 +112,7 @@ public class EventRepositoryTests {
         String title3 = "Werewolf";
         Date testDateTime = new Date();
         String testLocation = "Trottier 3rd floor";
-        String testDescription = "Game night";
+        String testDescription = "LegoSet night";
         int testMaxParticipants = 10;
 
         Event event1 = new Event(title1, testDateTime, testLocation, testDescription, testMaxParticipants, featuredGame);
@@ -137,13 +137,13 @@ public class EventRepositoryTests {
         assertEquals(testLocation, found.getLocation());
         assertEquals(testDescription, found.getDescription());
         assertEquals(testMaxParticipants, found.getMaxParticipants());
-        assertEquals(featuredGame.getId(), found.getFeaturedGame().getId());
+        assertEquals(featuredGame.getId(), found.getFeaturedSet().getId());
     }
 
     @Test
     public void testFindByTitleContaining() {
         // Create test data
-        Game featuredGame = new Game("Dungeons and Dragons", 3, 6, "D&D.jpg", new Date());
+        LegoSet featuredGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10012", "Dungeons and Dragons", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         featuredGame = entityManager.persist(featuredGame);
 
         final String title1 = "D&D Night";
@@ -151,7 +151,7 @@ public class EventRepositoryTests {
         final String title3 = "Werewolf";
         Date testDateTime = new Date();
         String testLocation = "Trottier 3rd floor";
-        String testDescription = "Game night";
+        String testDescription = "LegoSet night";
         int testMaxParticipants = 10;
 
         Event event1 = new Event(title1, testDateTime, testLocation, testDescription, testMaxParticipants, featuredGame);
@@ -177,14 +177,14 @@ public class EventRepositoryTests {
     @Test
     public void testFindByLocation() {
         // Create test data
-        Game featuredGame = new Game("Dungeons and Dragons", 3, 6, "D&D.jpg", new Date());
+        LegoSet featuredGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10013", "Dungeons and Dragons", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         featuredGame = entityManager.persist(featuredGame);
 
-        String testTitle = "Game Night";
+        String testTitle = "LegoSet Night";
         Date testDateTime = new Date();
         final String location1 = "Trottier 3rd floor";
         final String location2 = "Trottier 4th floor";
-        String testDescription = "Game night";
+        String testDescription = "LegoSet night";
         int testMaxParticipants = 10;
 
         Event event1 = new Event(testTitle, testDateTime, location1, testDescription, testMaxParticipants, featuredGame);
@@ -210,15 +210,15 @@ public class EventRepositoryTests {
     @Test
     public void testFindByLocationContaining() {
         // Create test data
-        Game featuredGame = new Game("Dungeons and Dragons", 3, 6, "D&D.jpg", new Date());
+        LegoSet featuredGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10014", "Dungeons and Dragons", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         featuredGame = entityManager.persist(featuredGame);
 
-        String testTitle = "Game Night";
+        String testTitle = "LegoSet Night";
         Date testDateTime = new Date();
         final String location1 = "Trottier 3rd floor";
         final String location2 = "Trottier 4th floor";
         final String location3 = "McConnell basement";
-        String testDescription = "Game night";
+        String testDescription = "LegoSet night";
         int testMaxParticipants = 10;
 
         Event event1 = new Event(testTitle, testDateTime, location1, testDescription, testMaxParticipants, featuredGame);
@@ -239,44 +239,13 @@ public class EventRepositoryTests {
         assertEquals(2, events.size());
         events.forEach(e -> assertTrue(e.getLocation().contains("Trottier")));
     }
-
-    @Test
-    public void testFindByFeaturedGameMinPlayers() {
-        // Create test data
-        Game game1 = new Game("D&D", 3, 6, "D&D.jpg", new Date());
-        Game game2 = new Game("Monopoly", 2, 4, "monopoly.jpg", new Date());
-        Game game3 = new Game("Werewolf", 5, 10, "werewolf.jpg", new Date());
-
-        game1 = entityManager.persist(game1);
-        game2 = entityManager.persist(game2);
-        game3 = entityManager.persist(game3);
-
-        Event event1 = new Event("Event 1", new Date(), "Location 1", "Description 1", 10, game1);
-        Event event2 = new Event("Event 2", new Date(), "Location 2", "Description 2", 10, game2);
-        Event event3 = new Event("Event 3", new Date(), "Location 3", "Description 3", 10, game3);
-
-        entityManager.persist(event1);
-        entityManager.persist(event2);
-        entityManager.persist(event3);
-        entityManager.flush();
-        entityManager.clear();
-
-        // Test finding by min players
-        List<Event> events = eventRepository.findByFeaturedGameMinPlayers(2);
-
-        // Assertions
-        assertNotNull(events);
-        assertEquals(1, events.size());
-        assertEquals(game2.getId(), events.get(0).getFeaturedGame().getId());
-    }
-
-    @Test
+@Test
     public void testFindByHostId() {
         // Create test data
         final Account host1 = entityManager.persist(new Account("Host One", "host1@test.com", "password1"));
         final Account host2 = entityManager.persist(new Account("Host Two", "host2@test.com", "password2"));
 
-        Game game = new Game("Test Game", 2, 4, "game.jpg", new Date());
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10018", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game = entityManager.persist(game);
 
         Event event1 = new Event("Event 1", new Date(), "Location 1", "Description 1", 10, game);
@@ -308,7 +277,7 @@ public class EventRepositoryTests {
         final Account host1 = entityManager.persist(new Account("Host One", "host1@test.com", "password1"));
         final Account host2 = entityManager.persist(new Account("Host Two", "host2@test.com", "password2"));
 
-        Game game = new Game("Test Game", 2, 4, "game.jpg", new Date());
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10019", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game = entityManager.persist(game);
 
         Event event1 = new Event("Event 1", new Date(), "Location 1", "Description 1", 10, game);

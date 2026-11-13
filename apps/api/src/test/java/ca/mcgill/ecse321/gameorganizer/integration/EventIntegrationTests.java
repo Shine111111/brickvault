@@ -37,11 +37,11 @@ import ca.mcgill.ecse321.gameorganizer.models.Event;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.TestJwtConfig;
 
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.EventRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
 import ca.mcgill.ecse321.gameorganizer.services.EventService;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK) // Use MOCK environment
@@ -79,7 +79,7 @@ public class EventIntegrationTests {
     private AccountRepository accountRepository;
 
     @Autowired
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -88,7 +88,7 @@ public class EventIntegrationTests {
     private EventService eventService;
 
     private GameOwner testHost;
-    private Game testGame;
+    private LegoSet testGame;
     private Event testEvent;
     private static final String BASE_URL = "/api/events";
     private static final String TEST_PASSWORD = "password123";
@@ -98,7 +98,7 @@ public class EventIntegrationTests {
     public void setup() {
         // Clean repositories first
         eventRepository.deleteAll();
-        gameRepository.deleteAll();
+        legoSetRepository.deleteAll();
         accountRepository.deleteAll();
 
         // Create test host as a GameOwner
@@ -107,9 +107,8 @@ public class EventIntegrationTests {
         System.out.println("Created testHost with ID: " + testHost.getId() + ", email: " + testHost.getEmail());
 
         // Create test game
-        testGame = new Game("Test Game", 2, 4, "test.jpg", new java.util.Date());
-        testGame.setOwner(testHost);
-        testGame = gameRepository.save(testGame);
+        testGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10021", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
+        testGame = legoSetRepository.save(testGame);
         System.out.println("Created testGame with ID: " + testGame.getId() + ", owner: " + testHost.getEmail());
 
         // Create test event with a known date (e.g., 2023-03-18)
@@ -132,7 +131,7 @@ public class EventIntegrationTests {
     @AfterEach
     public void cleanupAndClearToken() {
         eventRepository.deleteAll();
-        gameRepository.deleteAll();
+        legoSetRepository.deleteAll();
         accountRepository.deleteAll();
         // No token to clear
     }
@@ -154,7 +153,7 @@ public class EventIntegrationTests {
             + "\"location\":\"New Location\","
             + "\"description\":\"New Description\","
             + "\"maxParticipants\":20,"
-            + "\"featuredGame\":{\"id\":" + testGame.getId() + "}"
+            + "\"featuredSet\":{\"id\":" + testGame.getId() + "}"
             + "}";
 
         mockMvc.perform(MockMvcRequestBuilders.post(BASE_URL)
@@ -344,7 +343,7 @@ public class EventIntegrationTests {
                 .with(user(TEST_HOST_EMAIL).password(TEST_PASSWORD).roles("USER"))) // Add authentication
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$[0].featuredGame.name").value(testGame.getName()));
+            .andExpect(jsonPath("$[0].featuredSet.name").value(testGame.getName()));
     }
 
     @Test
@@ -378,7 +377,7 @@ public class EventIntegrationTests {
                 .with(user(TEST_HOST_EMAIL).password(TEST_PASSWORD).roles("USER")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$").isArray())
-            .andExpect(jsonPath("$[0].featuredGame.id").value(testGame.getId()));
+            .andExpect(jsonPath("$[0].featuredSet.id").value(testGame.getId()));
     }
 
     @Test

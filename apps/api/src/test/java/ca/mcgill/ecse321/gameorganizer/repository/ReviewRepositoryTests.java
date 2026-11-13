@@ -13,7 +13,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 
 import ca.mcgill.ecse321.gameorganizer.models.Account;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 import ca.mcgill.ecse321.gameorganizer.models.Review;
 import ca.mcgill.ecse321.gameorganizer.repositories.ReviewRepository;
@@ -62,19 +62,18 @@ public class ReviewRepositoryTests {
         GameOwner owner = new GameOwner("owner", "owner@test.com", "password");
         owner = entityManager.persist(owner);
 
-        Game game = new Game("Test Game", 2, 4, "test.jpg", new Date());
-        game.setOwner(owner);
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10004", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game = entityManager.persist(game);
 
         // Create and link review
-        Review review = new Review(5, "Game reference test", new Date());
-        review.setGameReviewed(game);
+        Review review = new Review(5, "LegoSet reference test", new Date());
+        review.setLegoSet(game);
         review = entityManager.persistAndFlush(review);
         entityManager.clear();
 
         Review found = reviewRepository.findReviewById(review.getId()).get();
-        assertNotNull(found.getGameReviewed());
-        assertEquals("Test Game", found.getGameReviewed().getName());
+        assertNotNull(found.getLegoSet());
+        assertEquals("Test LegoSet", found.getLegoSet().getName());
     }
 
     @Test
@@ -119,29 +118,27 @@ public class ReviewRepositoryTests {
         // Create initial game
         GameOwner owner1 = new GameOwner("owner1", "owner1@test.com", "password");
         owner1 = entityManager.persist(owner1);
-        Game game1 = new Game("Game 1", 2, 4, "game1.jpg", new Date());
-        game1.setOwner(owner1);
+        LegoSet game1 = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10005", "LegoSet 1", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game1 = entityManager.persist(game1);
 
         // Create second game
         GameOwner owner2 = new GameOwner("owner2", "owner2@test.com", "password");
         owner2 = entityManager.persist(owner2);
-        Game game2 = new Game("Game 2", 3, 6, "game2.jpg", new Date());
-        game2.setOwner(owner2);
+        LegoSet game2 = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10006", "LegoSet 2", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game2 = entityManager.persist(game2);
 
         // Create review with first game
-        Review review = new Review(4, "Game reference write test", new Date());
-        review.setGameReviewed(game1);
+        Review review = new Review(4, "LegoSet reference write test", new Date());
+        review.setLegoSet(game1);
         review = entityManager.persistAndFlush(review);
 
         // Update to second game
-        review.setGameReviewed(game2);
+        review.setLegoSet(game2);
         entityManager.persistAndFlush(review);
         entityManager.clear();
 
         Review found = reviewRepository.findReviewById(review.getId()).get();
-        assertEquals("Game 2", found.getGameReviewed().getName());
+        assertEquals("LegoSet 2", found.getLegoSet().getName());
     }
 
     @Test
@@ -180,8 +177,7 @@ public class ReviewRepositoryTests {
         GameOwner owner = new GameOwner("owner", "owner@test.com", "password");
         owner = entityManager.persist(owner);
 
-        Game game = new Game("Complete Game", 2, 6, "complete.jpg", new Date());
-        game.setOwner(owner);
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10007", "Complete LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game = entityManager.persist(game);
 
         Account reviewer = new Account();
@@ -193,7 +189,7 @@ public class ReviewRepositoryTests {
         // Create complete review
         Date currentDate = new Date();
         Review review = new Review(5, "Complete persistence test", currentDate);
-        review.setGameReviewed(game);
+        review.setLegoSet(game);
         review.setReviewer(reviewer);
         review = entityManager.persistAndFlush(review);
         entityManager.clear();
@@ -203,7 +199,7 @@ public class ReviewRepositoryTests {
         assertEquals(5, found.getRating());
         assertEquals("Complete persistence test", found.getComment());
         assertEquals(currentDate, found.getDateSubmitted());
-        assertEquals("Complete Game", found.getGameReviewed().getName());
+        assertEquals("Complete LegoSet", found.getLegoSet().getName());
         assertEquals("reviewer", found.getReviewer().getName());
     }
 
@@ -213,8 +209,7 @@ public class ReviewRepositoryTests {
         GameOwner owner = new GameOwner("owner", "owner@test.com", "password");
         owner = entityManager.persist(owner);
 
-        Game game = new Game("Delete Test Game", 2, 4, "delete.jpg", new Date());
-        game.setOwner(owner);
+        LegoSet game = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10008", "Delete Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         game = entityManager.persist(game);
 
         Account reviewer = new Account();
@@ -224,7 +219,7 @@ public class ReviewRepositoryTests {
         reviewer = entityManager.persist(reviewer);
 
         Review review = new Review(4, "Cascade delete test", new Date());
-        review.setGameReviewed(game);
+        review.setLegoSet(game);
         review.setReviewer(reviewer);
         review = entityManager.persistAndFlush(review);
 
@@ -236,7 +231,7 @@ public class ReviewRepositoryTests {
         // Verify review still exists but game reference is null
         Review found = reviewRepository.findReviewById(review.getId()).get();
         assertNotNull(found);
-        assertNull(found.getGameReviewed());
+        assertNull(found.getLegoSet());
         assertNotNull(found.getReviewer());
     }
 }

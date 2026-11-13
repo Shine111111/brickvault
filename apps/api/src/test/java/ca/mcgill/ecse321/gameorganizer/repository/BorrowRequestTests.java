@@ -17,11 +17,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequest;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequestStatus;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.BorrowRequestRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
 
 @DataJpaTest
 public class BorrowRequestTests {
@@ -33,13 +33,13 @@ public class BorrowRequestTests {
     private BorrowRequestRepository borrowRequestRepository;
 
     @Autowired
-    private GameRepository gameRepository;
+    private LegoSetRepository legoSetRepository;
 
     @Autowired
     private AccountRepository accountRepository;
 
     private GameOwner testOwner;
-    private Game testGame;
+    private LegoSet testGame;
     private Account testRequester;
     private Date testStartDate;
     private Date testEndDate;
@@ -51,8 +51,7 @@ public class BorrowRequestTests {
         testOwner = entityManager.persist(testOwner);
 
         // Create test game
-        testGame = new Game("Test Game", 2, 4, "test.jpg", new Date());
-        testGame.setOwner(testOwner);
+        testGame = new ca.mcgill.ecse321.gameorganizer.models.LegoSet("10001", "Test LegoSet", "Ninjago", 500, 2023, java.math.BigDecimal.valueOf(99.99), java.math.BigDecimal.valueOf(120.00), ca.mcgill.ecse321.gameorganizer.models.RetirementStatus.ACTIVE, "test.jpg", "Test set");
         testGame = entityManager.persist(testGame);
 
         // Create test requester
@@ -76,7 +75,7 @@ public class BorrowRequestTests {
     public void testPersistAndLoadBorrowRequest() {
         // Create a new borrow request
         BorrowRequest request = new BorrowRequest();
-        request.setRequestedGame(testGame);
+        request.setRequestedSet(testGame);
         request.setRequester(testRequester);
         request.setStartDate(testStartDate);
         request.setEndDate(testEndDate);
@@ -95,7 +94,7 @@ public class BorrowRequestTests {
         assertTrue(retrievedOpt.isPresent(), "The borrow request should be present in the database");
 
         BorrowRequest retrieved = retrievedOpt.get();
-        assertEquals(testGame.getId(), retrieved.getRequestedGame().getId());
+        assertEquals(testGame.getId(), retrieved.getRequestedSet().getId());
         assertEquals(testRequester.getId(), retrieved.getRequester().getId());
         assertEquals(testStartDate, retrieved.getStartDate());
         assertEquals(testEndDate, retrieved.getEndDate());
@@ -106,7 +105,7 @@ public class BorrowRequestTests {
     public void testFindByRequester() {
         // Create and save a borrow request
         BorrowRequest request = new BorrowRequest();
-        request.setRequestedGame(testGame);
+        request.setRequestedSet(testGame);
         request.setRequester(testRequester);
         request.setStartDate(testStartDate);
         request.setEndDate(testEndDate);
@@ -125,7 +124,7 @@ public class BorrowRequestTests {
     public void testFindByRequesterName() {
         // Create and save a borrow request
         BorrowRequest request = new BorrowRequest();
-        request.setRequestedGame(testGame);
+        request.setRequestedSet(testGame);
         request.setRequester(testRequester);
         request.setStartDate(testStartDate);
         request.setEndDate(testEndDate);
@@ -142,9 +141,15 @@ public class BorrowRequestTests {
 
     @Test
     public void testFindByOwnerAndStatus() {
+        ca.mcgill.ecse321.gameorganizer.models.CollectionItem item = new ca.mcgill.ecse321.gameorganizer.models.CollectionItem(
+                testGame, testOwner, ca.mcgill.ecse321.gameorganizer.models.ItemCondition.SEALED_NISB,
+                java.math.BigDecimal.valueOf(99.99), java.time.LocalDate.now(), true, true, "Test item");
+        item = entityManager.persist(item);
+
         // Create and save requests with different statuses
         BorrowRequest pendingRequest = new BorrowRequest();
-        pendingRequest.setRequestedGame(testGame);
+        pendingRequest.setRequestedSet(testGame);
+        pendingRequest.setCollectionItem(item);
         pendingRequest.setRequester(testRequester);
         pendingRequest.setStartDate(testStartDate);
         pendingRequest.setEndDate(testEndDate);
@@ -153,7 +158,8 @@ public class BorrowRequestTests {
         entityManager.persist(pendingRequest);
 
         BorrowRequest approvedRequest = new BorrowRequest();
-        approvedRequest.setRequestedGame(testGame);
+        approvedRequest.setRequestedSet(testGame);
+        approvedRequest.setCollectionItem(item);
         approvedRequest.setRequester(testRequester);
         approvedRequest.setStartDate(new Date(testStartDate.getTime() + 86400000)); // Next day
         approvedRequest.setEndDate(new Date(testEndDate.getTime() + 86400000));
@@ -165,8 +171,8 @@ public class BorrowRequestTests {
         entityManager.clear();
 
         // Find requests by owner and status
-        List<BorrowRequest> pendingRequests = borrowRequestRepository.findByRequestedGame_OwnerAndStatus(testOwner, BorrowRequestStatus.PENDING);
-        List<BorrowRequest> approvedRequests = borrowRequestRepository.findByRequestedGame_OwnerAndStatus(testOwner, BorrowRequestStatus.APPROVED);
+        List<BorrowRequest> pendingRequests = borrowRequestRepository.findByCollectionItem_OwnerAndStatus(testOwner, BorrowRequestStatus.PENDING);
+        List<BorrowRequest> approvedRequests = borrowRequestRepository.findByCollectionItem_OwnerAndStatus(testOwner, BorrowRequestStatus.APPROVED);
 
         assertEquals(1, pendingRequests.size());
         assertEquals(1, approvedRequests.size());
@@ -178,7 +184,7 @@ public class BorrowRequestTests {
     public void testFindOverlappingRequests() {
         // Create and save an approved request
         BorrowRequest request1 = new BorrowRequest();
-        request1.setRequestedGame(testGame);
+        request1.setRequestedSet(testGame);
         request1.setRequester(testRequester);
         request1.setStartDate(testStartDate);
         request1.setEndDate(testEndDate);
@@ -209,7 +215,7 @@ public class BorrowRequestTests {
     public void testDeleteRequest() {
         // Create and save a request
         BorrowRequest request = new BorrowRequest();
-        request.setRequestedGame(testGame);
+        request.setRequestedSet(testGame);
         request.setRequester(testRequester);
         request.setStartDate(testStartDate);
         request.setEndDate(testEndDate);

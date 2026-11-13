@@ -23,14 +23,14 @@ import ca.mcgill.ecse321.gameorganizer.exceptions.ResourceNotFoundException;
 import ca.mcgill.ecse321.gameorganizer.exceptions.UnauthedException;
 import ca.mcgill.ecse321.gameorganizer.models.Account;
 import ca.mcgill.ecse321.gameorganizer.models.BorrowRequest;
-import ca.mcgill.ecse321.gameorganizer.models.GameOwner;
-import ca.mcgill.ecse321.gameorganizer.models.Game;
-import ca.mcgill.ecse321.gameorganizer.models.GameInstance;
+
+import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
+import ca.mcgill.ecse321.gameorganizer.models.CollectionItem;
 import ca.mcgill.ecse321.gameorganizer.models.LendingRecord;
 import ca.mcgill.ecse321.gameorganizer.models.LendingRecord.LendingStatus;
 import ca.mcgill.ecse321.gameorganizer.repositories.AccountRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.BorrowRequestRepository;
-import ca.mcgill.ecse321.gameorganizer.repositories.GameInstanceRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.CollectionItemRepository;
 import ca.mcgill.ecse321.gameorganizer.repositories.LendingRecordRepository;
 
 /**
@@ -48,7 +48,7 @@ public class LendingRecordService {
     private final BorrowRequestRepository borrowRequestRepository;
     private final AccountRepository accountRepository; // Inject AccountRepository
     @Autowired
-    private GameInstanceRepository gameInstanceRepository; // Add GameInstanceRepository
+    private CollectionItemRepository collectionItemRepository; // Add GameInstanceRepository
 
     @Autowired
     public LendingRecordService(LendingRecordRepository lendingRecordRepository, BorrowRequestRepository borrowRequestRepository, AccountRepository accountRepository) {
@@ -80,7 +80,7 @@ public class LendingRecordService {
      * @throws IllegalStateException if creation fails
      */
     @Transactional
-    public ResponseEntity<String> createLendingRecord(Date startDate, Date endDate, BorrowRequest request, GameOwner owner) {
+    public ResponseEntity<String> createLendingRecord(Date startDate, Date endDate, BorrowRequest request, Account owner) {
         try {
             // Validate parameters
             if (startDate == null || endDate == null || request == null || owner == null) {
@@ -88,8 +88,8 @@ public class LendingRecordService {
             }
 
             // Validate owner consistency: the owner of the game must match the passed owner.
-            if (request.getRequestedGame() == null || request.getRequestedGame().getOwner() == null ||
-                request.getRequestedGame().getOwner().getId() != owner.getId()) {
+            if (request.getCollectionItem() == null || request.getCollectionItem().getOwner() == null ||
+                request.getCollectionItem().getOwner().getId() != owner.getId()) {
                 throw new IllegalArgumentException("The record owner must be the owner of the game in the borrow request");
             }
 
@@ -113,23 +113,23 @@ public class LendingRecordService {
             lendingRecordRepository.save(record);
             
             // Find all game instances for the requested game and set the first available one to unavailable
-            Game requestedGame = request.getRequestedGame();
-            List<GameInstance> instances = gameInstanceRepository.findByGame(requestedGame);
+            LegoSet requestedSet = request.getRequestedSet();
+            List<CollectionItem> instances = collectionItemRepository.findByLegoSet(requestedSet);
             boolean instanceFound = false;
             
-            for (GameInstance instance : instances) {
+            for (CollectionItem instance : instances) {
                 if (instance.isAvailable()) {
                     // instance.setAvailable(false);
-                    gameInstanceRepository.save(instance);
+                    collectionItemRepository.save(instance);
                     instanceFound = true;
                     log.info("Game instance ID: {} for game '{}' marked as unavailable due to lending", 
-                            instance.getId(), requestedGame.getName());
+                            instance.getId(), requestedSet.getName());
                     break;
                 }
             }
             
             if (!instanceFound) {
-                log.warn("No available game instance found for game '{}'", requestedGame.getName());
+                log.warn("No available game instance found for game '{}'", requestedSet.getName());
             }
 
             return ResponseEntity.ok("Lending record created successfully");
@@ -153,7 +153,7 @@ public class LendingRecordService {
      * @throws IllegalStateException if creation fails
      */
     @Transactional
-    public ResponseEntity<String> createLendingRecordFromRequestId(Date startDate, Date endDate, int requestId, GameOwner owner) {
+    public ResponseEntity<String> createLendingRecordFromRequestId(Date startDate, Date endDate, int requestId, Account owner) {
         // Retrieve the borrow request entity
         BorrowRequest request = borrowRequestRepository.findBorrowRequestById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("No borrow request found with ID " + requestId));
@@ -228,7 +228,7 @@ public class LendingRecordService {
      * @throws IllegalArgumentException if owner is null
      */
     @Transactional
-    public List<LendingRecord> getLendingRecordsByOwner(GameOwner owner) {
+    public List<LendingRecord> getLendingRecordsByOwner(Account owner) {
         if (owner == null) {
             throw new IllegalArgumentException("Owner cannot be null");
         }
@@ -287,7 +287,7 @@ public class LendingRecordService {
             filterDto.getToDate(),
             status,
             filterDto.getBorrowerId(),
-            filterDto.getGameId()
+            filterDto.getSetId()
         );
     }
     
@@ -313,7 +313,7 @@ public class LendingRecordService {
             filterDto.getToDate(),
             status,
             filterDto.getBorrowerId(),
-            filterDto.getGameId(),
+            filterDto.getSetId(),
             pageable
         );
     }
@@ -484,26 +484,26 @@ public class LendingRecordService {
             
             // Mark the corresponding game instance as available again
             BorrowRequest request = record.getRequest();
-            if (request != null && request.getRequestedGame() != null) {
-                Game game = request.getRequestedGame();
+            if (request != null && request.getRequestedSet() != null) {
+                LegoSet legoSet = request.getRequestedSet();
                 
                 // Find the first unavailable game instance for this game and mark it as available
-                List<GameInstance> instances = gameInstanceRepository.findByGame(game);
+                List<CollectionItem> instances = collectionItemRepository.findByLegoSet(legoSet);
                 boolean instanceUpdated = false;
                 
-                for (GameInstance instance : instances) {
+                for (CollectionItem instance : instances) {
                     if (!instance.isAvailable()) {
                         instance.setAvailable(true);
-                        gameInstanceRepository.save(instance);
+                        collectionItemRepository.save(instance);
                         instanceUpdated = true;
                         log.info("Game instance ID: {} for game '{}' marked as available after return", 
-                                instance.getId(), game.getName());
+                                instance.getId(), legoSet.getName());
                         break;
                     }
                 }
                 
                 if (!instanceUpdated) {
-                    log.warn("No unavailable game instance found for game '{}' to mark as available", game.getName());
+                    log.warn("No unavailable game instance found for game '{}' to mark as available", legoSet.getName());
                 }
             }
         
@@ -585,26 +585,26 @@ public class LendingRecordService {
             
             // Mark the corresponding game instance as available again
             BorrowRequest request = record.getRequest();
-            if (request != null && request.getRequestedGame() != null) {
-                Game game = request.getRequestedGame();
+            if (request != null && request.getRequestedSet() != null) {
+                LegoSet legoSet = request.getRequestedSet();
                 
                 // Find the first unavailable game instance for this game and mark it as available
-                List<GameInstance> instances = gameInstanceRepository.findByGame(game);
+                List<CollectionItem> instances = collectionItemRepository.findByLegoSet(legoSet);
                 boolean instanceUpdated = false;
                 
-                for (GameInstance instance : instances) {
+                for (CollectionItem instance : instances) {
                     if (!instance.isAvailable()) {
                         instance.setAvailable(true);
-                        gameInstanceRepository.save(instance);
+                        collectionItemRepository.save(instance);
                         instanceUpdated = true;
                         log.info("Game instance ID: {} for game '{}' marked as available after return", 
-                                instance.getId(), game.getName());
+                                instance.getId(), legoSet.getName());
                         break;
                     }
                 }
                 
                 if (!instanceUpdated) {
-                    log.warn("No unavailable game instance found for game '{}' to mark as available", game.getName());
+                    log.warn("No unavailable game instance found for game '{}' to mark as available", legoSet.getName());
                 }
             }
             
