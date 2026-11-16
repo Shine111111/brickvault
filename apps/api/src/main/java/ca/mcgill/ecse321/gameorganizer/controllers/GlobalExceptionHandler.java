@@ -10,6 +10,7 @@ import ca.mcgill.ecse321.gameorganizer.exceptions.ResourceNotFoundException;
 import java.util.Map;
 import java.util.HashMap;
 import ca.mcgill.ecse321.gameorganizer.exceptions.EmailNotFoundException;
+import ca.mcgill.ecse321.gameorganizer.exceptions.ExternalCatalogException;
 import ca.mcgill.ecse321.gameorganizer.exceptions.ForbiddenException;
 import ca.mcgill.ecse321.gameorganizer.exceptions.InvalidCredentialsException;
 import ca.mcgill.ecse321.gameorganizer.exceptions.InvalidPasswordException;
@@ -68,6 +69,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         errorResponse.put("error", ex.getMessage());
         errorResponse.put("status", HttpStatus.NOT_FOUND.name());
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(ExternalCatalogException.class)
+    public ResponseEntity<Map<String, String>> handleExternalCatalogException(ExternalCatalogException ex) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", ex.getMessage());
+        errorResponse.put("status", ex.getStatus().name());
+        return new ResponseEntity<>(errorResponse, ex.getStatus());
     }
 
 

@@ -99,6 +99,12 @@ public class LegoSetIntegrationTests {
                         .with(user("collector@brickvault.ca").roles("USER")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("NINJAGO City Markets"));
+
+        mockMvc.perform(post("/api/sets/import/71799")
+                        .with(user("collector@brickvault.ca").roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.setNumber").value("71799"))
+                .andExpect(jsonPath("$.name").value("NINJAGO City Markets"));
     }
 
     @Test

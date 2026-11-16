@@ -119,6 +119,17 @@ public class CollectionIntegrationTests {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1));
 
+        mockMvc.perform(get("/api/collection/analytics")
+                        .with(user(owner.getEmail()).roles("USER")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalSets").value(1))
+                .andExpect(jsonPath("$.totalPieces").value(6163))
+                .andExpect(jsonPath("$.totalCostCad").value(450.00))
+                .andExpect(jsonPath("$.estimatedMarketValueCad").value(520.00))
+                .andExpect(jsonPath("$.netGainCad").value(70.00))
+                .andExpect(jsonPath("$.themeBreakdown[0].theme").value("Ninjago"))
+                .andExpect(jsonPath("$.conditionBreakdown.SEALED_NISB").value(1));
+
         mockMvc.perform(get("/api/collection").param("forTradeOrSale", "true")
                         .with(user(owner.getEmail()).roles("USER")))
                 .andExpect(status().isOk())

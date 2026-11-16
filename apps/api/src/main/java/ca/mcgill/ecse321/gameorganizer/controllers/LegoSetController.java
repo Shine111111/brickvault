@@ -18,7 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import ca.mcgill.ecse321.gameorganizer.dto.request.LegoSetCreationDto;
 import ca.mcgill.ecse321.gameorganizer.dto.request.LegoSetSearchCriteria;
 import ca.mcgill.ecse321.gameorganizer.dto.response.LegoSetResponseDto;
+import ca.mcgill.ecse321.gameorganizer.dto.response.PriceHistoryPointDto;
 import ca.mcgill.ecse321.gameorganizer.models.RetirementStatus;
+import ca.mcgill.ecse321.gameorganizer.services.CollectionAnalyticsService;
+import ca.mcgill.ecse321.gameorganizer.services.LegoCatalogIntegrationService;
 import ca.mcgill.ecse321.gameorganizer.services.LegoSetService;
 import jakarta.validation.Valid;
 
@@ -27,10 +30,17 @@ import jakarta.validation.Valid;
 public class LegoSetController {
 
     private final LegoSetService legoSetService;
+    private final LegoCatalogIntegrationService legoCatalogIntegrationService;
+    private final CollectionAnalyticsService collectionAnalyticsService;
 
     @Autowired
-    public LegoSetController(LegoSetService legoSetService) {
+    public LegoSetController(
+            LegoSetService legoSetService,
+            LegoCatalogIntegrationService legoCatalogIntegrationService,
+            CollectionAnalyticsService collectionAnalyticsService) {
         this.legoSetService = legoSetService;
+        this.legoCatalogIntegrationService = legoCatalogIntegrationService;
+        this.collectionAnalyticsService = collectionAnalyticsService;
     }
 
     @GetMapping
@@ -54,6 +64,16 @@ public class LegoSetController {
     @GetMapping("/number/{setNumber}")
     public ResponseEntity<LegoSetResponseDto> getSetByNumber(@PathVariable String setNumber) {
         return ResponseEntity.ok(legoSetService.getLegoSetBySetNumber(setNumber));
+    }
+
+    @GetMapping("/{id}/price-history")
+    public ResponseEntity<List<PriceHistoryPointDto>> getSetPriceHistory(@PathVariable int id) {
+        return ResponseEntity.ok(collectionAnalyticsService.getSetPriceHistory(id));
+    }
+
+    @PostMapping("/import/{setNumber}")
+    public ResponseEntity<LegoSetResponseDto> lookupOrImportSet(@PathVariable String setNumber) {
+        return ResponseEntity.ok(legoCatalogIntegrationService.lookupOrImportSet(setNumber));
     }
 
     @PostMapping

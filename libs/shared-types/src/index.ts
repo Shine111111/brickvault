@@ -143,3 +143,29 @@ export interface ReviewResponseDto {
   setName?: string | null;
   reviewer?: AccountDto | null;
 }
+
+export interface ThemeBreakdownDto {
+  theme: string;
+  setCount: number;
+  pieceCount: number;
+  totalValueCad: number;
+}
+
+export interface PortfolioSummaryDto {
+  totalSets: number;
+  totalPieces: number;
+  totalCostCad: number;
+  estimatedMarketValueCad: number;
+  netGainCad: number;
+  roiPercentage: number;
+  themeBreakdown: ThemeBreakdownDto[];
+  conditionBreakdown: Partial<Record<ItemCondition, number>>;
+}
+
+export interface PriceHistoryPointDto {
+  id: number;
+  legoSetId: number;
+  recordedAt: string;
+  retailPriceCad?: number | null;
+  estimatedMarketValueCad: number;
+}

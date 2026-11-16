@@ -19,8 +19,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import ca.mcgill.ecse321.gameorganizer.dto.request.CollectionItemRequestDto;
 import ca.mcgill.ecse321.gameorganizer.dto.response.CollectionItemResponseDto;
+import ca.mcgill.ecse321.gameorganizer.dto.response.PortfolioSummaryDto;
 import ca.mcgill.ecse321.gameorganizer.exceptions.UnauthedException;
 import ca.mcgill.ecse321.gameorganizer.middleware.RequireItemOwner;
+import ca.mcgill.ecse321.gameorganizer.services.CollectionAnalyticsService;
 import ca.mcgill.ecse321.gameorganizer.services.CollectionService;
 import jakarta.validation.Valid;
 
@@ -29,10 +31,19 @@ import jakarta.validation.Valid;
 public class CollectionController {
 
     private final CollectionService collectionService;
+    private final CollectionAnalyticsService collectionAnalyticsService;
 
     @Autowired
-    public CollectionController(CollectionService collectionService) {
+    public CollectionController(
+            CollectionService collectionService,
+            CollectionAnalyticsService collectionAnalyticsService) {
         this.collectionService = collectionService;
+        this.collectionAnalyticsService = collectionAnalyticsService;
+    }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<PortfolioSummaryDto> getPortfolioAnalytics() {
+        return ResponseEntity.ok(collectionAnalyticsService.getPortfolioSummary(requireAuthenticatedEmail()));
     }
 
     @GetMapping

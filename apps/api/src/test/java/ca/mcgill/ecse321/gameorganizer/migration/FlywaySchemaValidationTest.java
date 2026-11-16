@@ -17,6 +17,7 @@ import ca.mcgill.ecse321.gameorganizer.config.TestSecurityConfig;
 import ca.mcgill.ecse321.gameorganizer.models.LegoSet;
 import ca.mcgill.ecse321.gameorganizer.models.RetirementStatus;
 import ca.mcgill.ecse321.gameorganizer.repositories.LegoSetRepository;
+import ca.mcgill.ecse321.gameorganizer.repositories.SetPriceHistoryRepository;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -33,9 +34,13 @@ public class FlywaySchemaValidationTest {
     @Autowired
     private LegoSetRepository legoSetRepository;
 
+    @Autowired
+    private SetPriceHistoryRepository setPriceHistoryRepository;
+
     @Test
     public void testFlywayMigrationsMatchHibernateEntities() {
         assertEquals(12, legoSetRepository.count(), "V2 should seed 12 LEGO sets");
+        assertEquals(24, setPriceHistoryRepository.count(), "V3 should seed 24 price history snapshots");
 
         Optional<LegoSet> markets = legoSetRepository.findBySetNumber("71799");
         assertTrue(markets.isPresent());
